@@ -9,10 +9,17 @@ import com.gamebuilder.Point;
 public class Polygon extends Shape {
     private ArrayList<Point> pts = new ArrayList<Point>();
     private Color color;
+    private String name;
 
-    public Polygon(Point startingPoint, Color color) {
+    public Polygon(Point startingPoint, Color color, String name) {
         this.pts.add(startingPoint);
         this.color = color;
+        this.name = name;
+    }
+
+    @Override()
+    public String getName() {
+        return this.name;
     }
 
     @Override()

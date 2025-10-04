@@ -6,6 +6,8 @@ import com.gamebuilder.Point;
 import com.gamebuilder.canvasobject.shape.BoundingRect;
 
 public abstract class CanvasObject {
+    public abstract String getName();
+    
     public abstract BoundingRect getBoundingRect();
 
     public abstract void setSize(int width, int height);

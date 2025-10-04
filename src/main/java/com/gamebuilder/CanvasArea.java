@@ -76,8 +76,10 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
         if (this.selectedTool != null) {
             if (this.selectedTool == "move") {
                 CanvasObject shape = this.getClickedShape();
-                this.focusedShape = shape;
-                this.rect = shape.getBoundingRect();
+                if (shape != null) {
+                    this.focusedShape = shape;
+                    this.rect = shape.getBoundingRect();
+                }
             } else {
                 Random rand = new Random();
                 Color clr = new Color(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255));
@@ -85,13 +87,13 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
                 CanvasObject object = null;
                 switch (this.selectedTool) {
                     case "polygon":
-                        object = new Polygon(new Point(event.getX(), event.getY()), clr);
+                        object = new Polygon(new Point(event.getX(), event.getY()), clr, "Polygon " + (this.shapes.size() + 1));
                         break;
                     case "circle":
-                        object = new Circle(new Point(event.getX(), event.getY()), 1, 1, clr);
+                        object = new Circle(new Point(event.getX(), event.getY()), 1, 1, clr, "Circle " + (this.shapes.size() + 1));
                         break;
                     case "rect":
-                        object = new Rectangle(new Point(event.getX(), event.getY()), 1, 1, clr);
+                        object = new Rectangle(new Point(event.getX(), event.getY()), 1, 1, clr, "Rectangle " + (this.shapes.size() + 1));
                         break;
                 }
                 if (object != null) {
@@ -105,7 +107,13 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
     }
 
     private CanvasObject getClickedShape() {
-        return this.shapes.get(0);
+        CanvasObject match = null;
+        for (CanvasObject s: this.shapes) {
+            if (s.getBoundingRect().hit((int) this.mouseStartX, (int) this.mouseStartY)) {
+                match = s;
+            }
+        }
+        return match;
     }
 
     @Override()
@@ -119,9 +127,11 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
             BoundingRect r = this.focusedShape.getBoundingRect();
             this.focusedShape.setSize(Math.abs(event.getX() - r.left), Math.abs(event.getY() - r.top));
         } else if (this.selectedTool == "move" && this.focusedShape != null) {
-            int dx = (int) (event.getX() - this.mouseStartX);
-            int dy = (int) (event.getY() - this.mouseStartY);
-            this.focusedShape.translate(new Point(this.rect.left + dx, this.rect.top + dy));
+            if (this.rect != null) {
+                int dx = (int) (event.getX() - this.mouseStartX);
+                int dy = (int) (event.getY() - this.mouseStartY);
+                this.focusedShape.translate(new Point(this.rect.left + dx, this.rect.top + dy));
+            }
         }
 
         repaint();

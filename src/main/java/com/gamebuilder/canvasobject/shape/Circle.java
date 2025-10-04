@@ -10,12 +10,19 @@ public class Circle extends Shape {
     private int width;
     private int height;
     private Color color;
+    private String name;
 
-    public Circle(Point p, int width, int height, Color color) {
+    public Circle(Point p, int width, int height, Color color, String name) {
         this.p = p;
         this.width = width;
         this.height = height;
         this.color = color;
+        this.name = name;
+    }
+
+    @Override()
+    public String getName() {
+        return this.name;
     }
 
     @Override()
