@@ -23,6 +23,7 @@ public class GameBuilder {
         frame.add(new LayersPanel(this), BorderLayout.EAST);
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLocationRelativeTo(null);
         frame.setVisible(true);
     }
 

@@ -25,10 +25,16 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
     private String selectedTool;
     private float mouseStartX;
     private float mouseStartY;
+    private float currentMouseX;
+    private float currentMouseY;
+    private Color color;
 
     public CanvasArea(GameBuilder gameBuilder) {
         addMouseListener(this);
         addMouseMotionListener(this);
+
+        Random rand = new Random();
+        this.color = new Color(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255));
     }
 
     public void drawFocusedIndicator(Graphics g) {
@@ -65,6 +71,28 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
             s.draw(g);
         }
 
+        if (this.selectedTool == "drawing_polygon") {
+            g.setColor(Color.BLACK);
+
+            ArrayList<Point> pts = ((Polygon) this.focusedShape).getPoints();
+
+            // Show polygon lines
+            for (int i = 0; i < pts.size(); i++) {
+                if (i + 1 < pts.size()) {
+                    g.drawLine(
+                        (int) pts.get(i).x,
+                        (int) pts.get(i).y,
+                        (int) pts.get(i + 1).x,
+                        (int) pts.get(i + 1).y
+                    );
+                }
+
+                g.drawRect((int) pts.get(i).x - 2, (int) pts.get(i).y - 2, 4, 4);
+            }
+            Point lastPoint = pts.get(pts.size() - 1);
+            g.drawLine((int) lastPoint.x, (int) lastPoint.y, (int) this.currentMouseX, (int) this.currentMouseY);
+        }
+
         this.drawFocusedIndicator(g);
     }
 
@@ -80,20 +108,28 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
                     this.focusedShape = shape;
                     this.rect = shape.getBoundingRect();
                 }
-            } else {
-                Random rand = new Random();
-                Color clr = new Color(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255));
+            } else if (this.selectedTool == "drawing_polygon") {
+                Polygon p = (Polygon) this.focusedShape;
 
+                Point nextPoint = new Point(event.getX(), event.getY());
+
+                if (Math.abs(nextPoint.distanceFrom(p.getPoints().get(0))) < 3) {
+                    this.selectedTool = "polygon";
+                } else {
+                    p.addPoint(nextPoint);
+                }
+            } else {
                 CanvasObject object = null;
                 switch (this.selectedTool) {
                     case "polygon":
-                        object = new Polygon(new Point(event.getX(), event.getY()), clr, "Polygon " + (this.shapes.size() + 1));
+                        object = new Polygon(new Point(event.getX(), event.getY()), this.color, "Polygon " + (this.shapes.size() + 1));
+                        this.selectedTool = "drawing_polygon";
                         break;
                     case "circle":
-                        object = new Circle(new Point(event.getX(), event.getY()), 1, 1, clr, "Circle " + (this.shapes.size() + 1));
+                        object = new Circle(new Point(event.getX(), event.getY()), 1, 1, this.color, "Circle " + (this.shapes.size() + 1));
                         break;
                     case "rect":
-                        object = new Rectangle(new Point(event.getX(), event.getY()), 1, 1, clr, "Rectangle " + (this.shapes.size() + 1));
+                        object = new Rectangle(new Point(event.getX(), event.getY()), 1, 1, this.color, "Rectangle " + (this.shapes.size() + 1));
                         break;
                 }
                 if (object != null) {
@@ -139,7 +175,10 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
 
     @Override()
     public void mouseMoved(MouseEvent event) {
+        this.currentMouseX = event.getX();
+        this.currentMouseY = event.getY();
 
+        repaint();
     }
 
     @Override()
