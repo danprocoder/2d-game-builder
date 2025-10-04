@@ -6,6 +6,8 @@ import java.awt.Dimension;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+import com.gamebuilder.model.CanvasModel;
+
 public class GameBuilder {
     CanvasArea canvas;
 
@@ -17,10 +19,12 @@ public class GameBuilder {
 
         frame.add(new ShapePanel(this), BorderLayout.WEST);
 
-        this.canvas = new CanvasArea(this);
+        CanvasModel model = new CanvasModel();
+
+        this.canvas = new CanvasArea(this, model);
         frame.add(this.canvas, BorderLayout.CENTER);
 
-        frame.add(new LayersPanel(this), BorderLayout.EAST);
+        frame.add(new LayersPanel(this, model), BorderLayout.EAST);
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLocationRelativeTo(null);
