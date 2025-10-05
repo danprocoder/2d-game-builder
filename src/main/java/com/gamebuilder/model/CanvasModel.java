@@ -8,10 +8,6 @@ interface CanvasModelDeleteListener {
     public void onDelete(CanvasModel model);
 }
 
-interface CanvasModelAddListener {
-    public void onAdd(CanvasObject object, CanvasModel model);
-}
-
 public class CanvasModel {
     private ArrayList<CanvasObject> shapes = new ArrayList<CanvasObject>();
 

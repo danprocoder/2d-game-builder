@@ -24,7 +24,9 @@ public class GameBuilder {
         this.canvas = new CanvasArea(this, model);
         frame.add(this.canvas, BorderLayout.CENTER);
 
-        frame.add(new LayersPanel(this, model), BorderLayout.EAST);
+        LayersPanel layersPanel = new LayersPanel(this, model);
+        frame.add(layersPanel, BorderLayout.EAST);
+        model.addOnAddListener(layersPanel);
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLocationRelativeTo(null);
