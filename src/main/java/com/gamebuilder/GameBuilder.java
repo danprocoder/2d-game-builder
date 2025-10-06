@@ -5,8 +5,13 @@ import java.awt.Dimension;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
 
 import com.gamebuilder.model.CanvasModel;
+
+class Assets extends JPanel {
+
+}
 
 public class GameBuilder {
     CanvasArea canvas;
@@ -17,7 +22,11 @@ public class GameBuilder {
 
         frame.setLayout(new BorderLayout());
 
-        frame.add(new ShapePanel(this), BorderLayout.WEST);
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.addTab("Shapes", new ShapePanel(this));
+        tabbedPane.addTab("Assets", new Assets());
+
+        frame.add(tabbedPane, BorderLayout.WEST);
 
         CanvasModel model = new CanvasModel();
 
@@ -25,8 +34,8 @@ public class GameBuilder {
         frame.add(this.canvas, BorderLayout.CENTER);
 
         LayersPanel layersPanel = new LayersPanel(this, model);
-        frame.add(layersPanel, BorderLayout.EAST);
         model.addOnAddListener(layersPanel);
+        frame.add(layersPanel, BorderLayout.EAST);
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLocationRelativeTo(null);

@@ -15,4 +15,6 @@ public abstract class CanvasObject {
     public abstract void draw(Graphics g);
 
     public abstract void translate(Point p);
+
+    public abstract void setSelected(boolean selected);
 }
