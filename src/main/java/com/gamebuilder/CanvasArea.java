@@ -20,7 +20,6 @@ import com.gamebuilder.model.CanvasModel;
 
 public class CanvasArea extends JPanel implements MouseListener, MouseMotionListener {
 
-    private CanvasObject focusedShape;
     private BoundingRect rect;
     private String selectedTool;
     private float mouseStartX;
@@ -41,8 +40,9 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
     }
 
     public void drawFocusedIndicator(Graphics g) {
-        if (this.focusedShape != null) {
-            BoundingRect r = this.focusedShape.getBoundingRect();
+        CanvasObject selectedObject = this.model.getSelectedObject();
+        if (selectedObject != null) {
+            BoundingRect r = selectedObject.getBoundingRect();
 
             g.setColor(new Color(0, 0, 0));
 
@@ -77,7 +77,8 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
         if (this.selectedTool == "drawing_polygon") {
             g.setColor(Color.BLACK);
 
-            ArrayList<Point> pts = ((Polygon) this.focusedShape).getPoints();
+            // TODO: Check to be sure that the selected object is a polygon
+            ArrayList<Point> pts = ((Polygon) this.model.getSelectedObject()).getPoints();
 
             // Show polygon lines
             for (int i = 0; i < pts.size(); i++) {
@@ -104,41 +105,47 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
         this.mouseStartX = event.getX();
         this.mouseStartY = event.getY();
 
-        if (this.selectedTool != null) {
-            if (this.selectedTool == "move") {
-                CanvasObject shape = this.getClickedShape();
-                if (shape != null) {
-                    this.focusedShape = shape;
-                    this.rect = shape.getBoundingRect();
-                }
-            } else if (this.selectedTool == "drawing_polygon") {
-                Polygon p = (Polygon) this.focusedShape;
+        if (this.selectedTool == "move") {
+            // This will make sure that if a shape is currently selected, it
+            // will be deselected if the user clicks outside of the shape
+            this.model.deselectAll();
+            
+            CanvasObject shape = this.getClickedShape();
+            if (shape != null) {
+                shape.setSelected(true);
+                this.rect = shape.getBoundingRect();
+            }
+        } else if (this.selectedTool == "drawing_polygon") {
+            Polygon p = (Polygon) this.model.getSelectedObject();
 
-                Point nextPoint = new Point(event.getX(), event.getY());
+            Point nextPoint = new Point(event.getX(), event.getY());
 
-                if (Math.abs(nextPoint.distanceFrom(p.getPoints().get(0))) < 3) {
-                    this.selectedTool = "polygon";
-                } else {
-                    p.addPoint(nextPoint);
-                }
+            if (Math.abs(nextPoint.distanceFrom(p.getPoints().get(0))) < 3) {
+                // This completes the polygon because setting the tool back to "polygon" will
+                // cause a new polygon to be started on the next click
+                this.selectedTool = "polygon";
             } else {
-                CanvasObject object = null;
-                switch (this.selectedTool) {
-                    case "polygon":
-                        object = new Polygon(new Point(event.getX(), event.getY()), this.color, "Polygon " + (this.model.getNumberOfObjects() + 1));
-                        this.selectedTool = "drawing_polygon";
-                        break;
-                    case "circle":
-                        object = new Circle(new Point(event.getX(), event.getY()), 1, 1, this.color, "Circle " + (this.model.getNumberOfObjects() + 1));
-                        break;
-                    case "rect":
-                        object = new Rectangle(new Point(event.getX(), event.getY()), 1, 1, this.color, "Rectangle " + (this.model.getNumberOfObjects() + 1));
-                        break;
-                }
-                if (object != null) {
-                    this.model.addObject(object);
-                    this.focusedShape = object;
-                }
+                p.addPoint(nextPoint);
+            }
+        } else {
+            CanvasObject object = null;
+            switch (this.selectedTool) {
+                case "polygon":
+                    object = new Polygon(new Point(event.getX(), event.getY()), this.color, "Polygon " + (this.model.getNumberOfObjects() + 1));
+                    this.selectedTool = "drawing_polygon";
+                    break;
+                case "circle":
+                    object = new Circle(new Point(event.getX(), event.getY()), 1, 1, this.color, "Circle " + (this.model.getNumberOfObjects() + 1));
+                    break;
+                case "rect":
+                    object = new Rectangle(new Point(event.getX(), event.getY()), 1, 1, this.color, "Rectangle " + (this.model.getNumberOfObjects() + 1));
+                    break;
+            }
+            if (object != null) {
+                // New objects are selected by default
+                this.model.deselectAll();
+                object.setSelected(true);
+                this.model.addObject(object);
             }
         }
 
@@ -162,14 +169,17 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
 
     @Override()
     public void mouseDragged(MouseEvent event) {
+        CanvasObject selectedObject = this.model.getSelectedObject();
+        if (selectedObject == null) return;
+
         if (this.selectedTool == "circle" || this.selectedTool == "rect" || this.selectedTool == "polygon") {
-            BoundingRect r = this.focusedShape.getBoundingRect();
-            this.focusedShape.setSize(Math.abs(event.getX() - r.left), Math.abs(event.getY() - r.top));
-        } else if (this.selectedTool == "move" && this.focusedShape != null) {
+            BoundingRect r = selectedObject.getBoundingRect();
+            selectedObject.setSize(Math.abs(event.getX() - r.left), Math.abs(event.getY() - r.top));
+        } else if (this.selectedTool == "move") {
             if (this.rect != null) {
                 int dx = (int) (event.getX() - this.mouseStartX);
                 int dy = (int) (event.getY() - this.mouseStartY);
-                this.focusedShape.translate(new Point(this.rect.left + dx, this.rect.top + dy));
+                selectedObject.translate(new Point(this.rect.left + dx, this.rect.top + dy));
             }
         }
 

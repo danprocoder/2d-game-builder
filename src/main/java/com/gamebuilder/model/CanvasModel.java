@@ -34,6 +34,22 @@ public class CanvasModel {
         return this.shapes;
     }
 
+    public void deselectAll() {
+        for (CanvasObject shape: this.shapes) {
+            shape.setSelected(false);
+        }
+    }
+
+    public CanvasObject getSelectedObject() {
+        for (CanvasObject shape: this.shapes) {
+            if (shape.isSelected()) {
+                return shape;
+            }
+        }
+
+        return null;
+    }
+
     public int getNumberOfObjects() {
         return this.shapes.size();
     }

@@ -11,7 +11,6 @@ public class Rectangle extends Shape {
     private int height;
     private Color color;
     private String name;
-    private boolean selected;
 
     public Rectangle(Point point, int width, int height, Color color, String name) {
         this.point = point;
@@ -24,11 +23,6 @@ public class Rectangle extends Shape {
     @Override()
     public String getName() {
         return this.name;
-    }
-
-    @Override()
-    public void setSelected(boolean selected) {
-        this.selected = selected;
     }
 
     @Override()

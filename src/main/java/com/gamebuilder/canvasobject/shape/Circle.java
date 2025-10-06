@@ -11,7 +11,6 @@ public class Circle extends Shape {
     private int height;
     private Color color;
     private String name;
-    private boolean selected;
 
     public Circle(Point p, int width, int height, Color color, String name) {
         this.p = p;
@@ -24,11 +23,6 @@ public class Circle extends Shape {
     @Override()
     public String getName() {
         return this.name;
-    }
-
-    @Override()
-    public void setSelected(boolean selected) {
-        this.selected = selected;
     }
 
     @Override()

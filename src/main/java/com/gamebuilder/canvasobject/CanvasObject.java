@@ -6,6 +6,8 @@ import com.gamebuilder.Point;
 import com.gamebuilder.canvasobject.shape.BoundingRect;
 
 public abstract class CanvasObject {
+    private boolean selected = false;
+
     public abstract String getName();
     
     public abstract BoundingRect getBoundingRect();
@@ -16,5 +18,11 @@ public abstract class CanvasObject {
 
     public abstract void translate(Point p);
 
-    public abstract void setSelected(boolean selected);
+    public void setSelected(boolean selected) {
+        this.selected = selected;
+    }
+
+    public boolean isSelected() {
+        return this.selected;
+    }
 }
