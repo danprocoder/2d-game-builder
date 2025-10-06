@@ -15,8 +15,11 @@ class Assets extends JPanel {
 
 public class GameBuilder {
     CanvasArea canvas;
+    private CanvasModel model;
 
     public GameBuilder() {
+        this.model = new CanvasModel();
+
         JFrame frame = new JFrame("Game Builder");
         frame.setSize(850, 500);
 
@@ -27,8 +30,6 @@ public class GameBuilder {
         tabbedPane.addTab("Assets", new Assets());
 
         frame.add(tabbedPane, BorderLayout.WEST);
-
-        CanvasModel model = new CanvasModel();
 
         this.canvas = new CanvasArea(this, model);
         frame.add(this.canvas, BorderLayout.CENTER);
@@ -44,6 +45,10 @@ public class GameBuilder {
 
     public void onToolChanged(String tool) {
         this.canvas.setTool(tool);
+    }
+
+    public CanvasModel getModel() {
+        return this.model;
     }
 
     public static void main(String[] args) {
