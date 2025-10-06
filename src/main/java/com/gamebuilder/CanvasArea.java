@@ -105,26 +105,46 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
         this.mouseStartY = event.getY();
 
         if (this.selectedTool == "move") {
-            // This will make sure that if a shape is currently selected, it
-            // will be deselected if the user clicks outside of the shape
-            this.model.deselectAll();
-
             CanvasObject shape = this.getClickedShape();
-            if (shape != null) {
-                shape.setSelected(true);
-                this.rect = shape.getBoundingRect();
+
+            // If no shape was clicked, deselect all shapes
+            if (shape == null) {
+                this.model.deselectAll();
+                this.rect = null;
+            } else {
+                if (shape instanceof Polygon) {
+                    if (shape.isSelected()) {
+                        ((Polygon) shape).setTransform(true);
+                    } else {
+                        // This will make sure that if a shape is currently selected, it
+                        // will be deselected if the user clicks outside of the shape
+                        this.model.deselectAll();
+                        
+                        shape.setSelected(true);
+                        this.rect = shape.getBoundingRect();
+                    }
+                } else {
+                    // This will make sure that if a shape is currently selected, it
+                    // will be deselected if the user clicks outside of the shape
+                    this.model.deselectAll();
+                    
+                    shape.setSelected(true);
+                    this.rect = shape.getBoundingRect();
+                }
             }
         } else if (this.selectedTool == "drawing_polygon") {
             Polygon p = (Polygon) this.model.getSelectedObject();
 
             Point nextPoint = new Point(event.getX(), event.getY());
 
-            if (Math.abs(nextPoint.distanceFrom(p.getPoints().get(0))) < 3) {
+            if (Math.abs(nextPoint.distanceFrom(p.getPoints().get(0))) < 5) {
                 // This completes the polygon because setting the tool back to "polygon" will
                 // cause a new polygon to be started on the next click
                 this.selectedTool = "polygon";
             } else {
                 p.addPoint(nextPoint);
+
+                this.rect = p.getBoundingRect();
             }
         } else {
             CanvasObject object = null;
@@ -145,6 +165,8 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
                 this.model.deselectAll();
                 object.setSelected(true);
                 this.model.addObject(object);
+
+                this.rect = object.getBoundingRect();
             }
         }
 
@@ -154,7 +176,19 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
     private CanvasObject getClickedShape() {
         CanvasObject match = null;
         for (CanvasObject s: this.model.getObjects()) {
-            if (s.getBoundingRect().hit((int) this.mouseStartX, (int) this.mouseStartY)) {
+            if (s instanceof Polygon) {
+                Polygon p = (Polygon) s;
+                ArrayList<Point> pts = p.getPoints();
+                int x[] = new int[p.getPoints().size()];
+                int y[] = new int[p.getPoints().size()];
+                for (int i = 0; i < pts.size(); i++) {
+                    x[i] = (int) pts.get(i).x;
+                    y[i] = (int) pts.get(i).y;
+                }
+                if (new java.awt.Polygon(x, y, x.length).contains(this.mouseStartX, this.mouseStartY)) {
+                    match = s;
+                }
+            } else if (s.getBoundingRect().hit((int) this.mouseStartX, (int) this.mouseStartY)) {
                 match = s;
             }
         }

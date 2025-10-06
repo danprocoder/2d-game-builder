@@ -61,6 +61,21 @@ public class Polygon extends Shape {
         return new BoundingRect(minY, maxX, maxY, minX);
     }
 
+    private ArrayList<BoundingRect> getTransformBoxes() {
+        ArrayList<BoundingRect> boxes = new ArrayList<BoundingRect>();
+        for (Point pt: this.pts) {
+            boxes.add(
+                new BoundingRect(
+                    (int) (pt.y - 5),
+                    (int) (pt.x + 5),
+                    (int) (pt.y + 5),
+                    (int) (pt.x - 5)
+                )
+            );
+        }
+        return boxes;
+    }
+
     @Override()
     public void setSize(int width, int height) {
 
@@ -90,7 +105,19 @@ public class Polygon extends Shape {
         g.fillPolygon(x, y, this.pts.size());
 
         if (this.transform) {
+            ArrayList<BoundingRect> boxes = this.getTransformBoxes();
+            g.setColor(Color.BLACK);
+            for (int i = 0; i < boxes.size(); i++) {
+                BoundingRect box = boxes.get(i);
+                g.drawRect(box.left, box.top, box.right - box.left, box.bottom - box.top);
 
+                g.drawLine(
+                    box.left + 5,
+                    box.top + 5,
+                    boxes.get(i + 1 < boxes.size() ? i + 1 : 0).left + 5,
+                    boxes.get(i + 1 < boxes.size() ? i + 1 : 0).top + 5
+                );
+            }
         } else if (this.isSelected()) {
             this.drawResizeHandles(g);
         }
