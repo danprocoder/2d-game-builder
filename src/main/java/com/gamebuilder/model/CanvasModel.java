@@ -1,5 +1,6 @@
 package com.gamebuilder.model;
 
+import java.awt.Color;
 import java.util.ArrayList;
 
 import com.gamebuilder.canvasobject.CanvasObject;
@@ -13,6 +14,9 @@ public class CanvasModel {
 
     private ArrayList<CanvasModelDeleteListener> deleteListener = new ArrayList<CanvasModelDeleteListener>();
     private ArrayList<CanvasModelAddListener> addListener = new ArrayList<CanvasModelAddListener>();
+    private ArrayList<CanvasModelUpdateListener> updateListener = new ArrayList<CanvasModelUpdateListener>();
+
+    private Color color = Color.RED;
 
     public void addObject(CanvasObject object) {
         this.shapes.add(object);
@@ -52,6 +56,25 @@ public class CanvasModel {
 
     public int getNumberOfObjects() {
         return this.shapes.size();
+    }
+
+    public Color getColor() {
+        return this.color;
+    }
+
+    public void setColor(Color color) {
+        this.color = color;
+        this.notifyUpdate();
+    }
+
+    public void notifyUpdate() {
+        for (CanvasModelUpdateListener listener: this.updateListener) {
+            listener.onCanvasModelUpdated(this);
+        }
+    }
+
+    public void addUpdateListener(CanvasModelUpdateListener listener) {
+        this.updateListener.add(listener);
     }
 
     public void addOnAddListener(CanvasModelAddListener listener) {

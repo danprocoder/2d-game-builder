@@ -6,8 +6,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Random;
 
 import javax.swing.JPanel;
 
@@ -26,15 +24,11 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
     private float mouseStartY;
     private float currentMouseX;
     private float currentMouseY;
-    private Color color;
     private CanvasModel model;
 
     public CanvasArea(GameBuilder gameBuilder, CanvasModel model) {
         addMouseListener(this);
         addMouseMotionListener(this);
-
-        Random rand = new Random();
-        this.color = new Color(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255));
 
         this.model = model;
     }
@@ -150,14 +144,14 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
             CanvasObject object = null;
             switch (this.selectedTool) {
                 case "polygon":
-                    object = new Polygon(new Point(event.getX(), event.getY()), this.color, "Polygon " + (this.model.getNumberOfObjects() + 1));
+                    object = new Polygon(new Point(event.getX(), event.getY()), this.model.getColor(), "Polygon " + (this.model.getNumberOfObjects() + 1));
                     this.selectedTool = "drawing_polygon";
                     break;
                 case "circle":
-                    object = new Circle(new Point(event.getX(), event.getY()), 1, 1, this.color, "Circle " + (this.model.getNumberOfObjects() + 1));
+                    object = new Circle(new Point(event.getX(), event.getY()), 1, 1, this.model.getColor(), "Circle " + (this.model.getNumberOfObjects() + 1));
                     break;
                 case "rect":
-                    object = new Rectangle(new Point(event.getX(), event.getY()), 1, 1, this.color, "Rectangle " + (this.model.getNumberOfObjects() + 1));
+                    object = new Rectangle(new Point(event.getX(), event.getY()), 1, 1, this.model.getColor(), "Rectangle " + (this.model.getNumberOfObjects() + 1));
                     break;
             }
             if (object != null) {
