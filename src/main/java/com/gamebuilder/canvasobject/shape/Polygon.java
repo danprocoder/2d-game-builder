@@ -10,11 +10,16 @@ public class Polygon extends Shape {
     private ArrayList<Point> pts = new ArrayList<Point>();
     private Color color;
     private String name;
+    private boolean transform = false;
 
     public Polygon(Point startingPoint, Color color, String name) {
         this.pts.add(startingPoint);
         this.color = color;
         this.name = name;
+    }
+
+    public void setTransform(boolean transform) {
+        this.transform = transform;
     }
 
     public void addPoint(Point p) {
@@ -31,9 +36,16 @@ public class Polygon extends Shape {
     }
 
     @Override()
-    public BoundingRect getBoundingRect() {
-        BoundingRect rect = new BoundingRect();
+    public void setSelected(boolean selected) {
+        super.setSelected(selected);
 
+        if (selected == false) {
+            this.transform = false;
+        }
+    }
+
+    @Override()
+    public BoundingRect getBoundingRect() {
         int minX = Integer.MAX_VALUE;
         int minY = Integer.MAX_VALUE;
         int maxX = Integer.MIN_VALUE;
@@ -46,12 +58,7 @@ public class Polygon extends Shape {
             if (pt.y > maxY) maxY = (int) pt.y;
         }
 
-        rect.left = minX;
-        rect.top = minY;
-        rect.right = maxX;
-        rect.bottom = maxY;
-
-        return rect;
+        return new BoundingRect(minY, maxX, maxY, minX);
     }
 
     @Override()
@@ -81,5 +88,11 @@ public class Polygon extends Shape {
             y[i] = (int) this.pts.get(i).y;
         }
         g.fillPolygon(x, y, this.pts.size());
+
+        if (this.transform) {
+
+        } else if (this.isSelected()) {
+            this.drawResizeHandles(g);
+        }
     }
 }

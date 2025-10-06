@@ -27,14 +27,12 @@ public class Rectangle extends Shape {
 
     @Override()
     public BoundingRect getBoundingRect() {
-        BoundingRect rect = new BoundingRect();
-
-        rect.left = (int) this.point.x;
-        rect.top = (int) this.point.y;
-        rect.right = (int) this.point.x + this.width;
-        rect.bottom = (int) this.point.y + this.height;
-
-        return rect;
+        return new BoundingRect(
+            (int) this.point.y,
+            (int) this.point.x + this.width,
+            (int) this.point.y + this.height,
+            (int) this.point.x
+        );
     }
 
     @Override()
@@ -52,5 +50,9 @@ public class Rectangle extends Shape {
     public void draw(Graphics g) {
         g.setColor(this.color);
         g.fillRect((int) this.point.x, (int) this.point.y, this.width, this.height);
+
+        if (this.isSelected()) {
+            this.drawResizeHandles(g);
+        }
     }
 }

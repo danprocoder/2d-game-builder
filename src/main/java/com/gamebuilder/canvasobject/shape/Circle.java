@@ -27,12 +27,12 @@ public class Circle extends Shape {
 
     @Override()
     public BoundingRect getBoundingRect() {
-        BoundingRect rect = new BoundingRect();
-
-        rect.left = (int) this.p.x;
-        rect.top = (int) this.p.y;
-        rect.right = (int) this.p.x + this.width;
-        rect.bottom = (int) this.p.y + this.height;
+        BoundingRect rect = new BoundingRect(
+            (int) this.p.y,
+            (int) this.p.x + this.width,
+            (int) this.p.y + this.height,
+            (int) this.p.x
+        );
 
         return rect;
     }
@@ -52,5 +52,9 @@ public class Circle extends Shape {
     public void draw(Graphics g) {
         g.setColor(this.color);
         g.fillOval((int) this.p.x, (int) this.p.y, this.width, this.height);
+
+        if (this.isSelected()) {
+            this.drawResizeHandles(g);
+        }
     }
 }

@@ -39,28 +39,28 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
         this.model = model;
     }
 
-    public void drawFocusedIndicator(Graphics g) {
-        CanvasObject selectedObject = this.model.getSelectedObject();
-        if (selectedObject != null) {
-            BoundingRect r = selectedObject.getBoundingRect();
+    // public void drawFocusedIndicator(Graphics g) {
+    //     CanvasObject selectedObject = this.model.getSelectedObject();
+    //     if (selectedObject != null) {
+    //         BoundingRect r = selectedObject.getBoundingRect();
 
-            g.setColor(new Color(0, 0, 0));
+    //         g.setColor(new Color(0, 0, 0));
 
-            // top line
-            g.drawLine(r.left - 10, r.top - 10, r.right + 10, r.top - 10);
-            // right line
-            g.drawLine(r.right + 10, r.top - 10, r.right + 10, r.bottom + 10);
-            // bottom line
-            g.drawLine(r.left - 10, r.bottom + 10, r.right + 10, r.bottom + 10);
-            // left line
-            g.drawLine(r.left - 10, r.top - 10, r.left - 10, r.bottom + 10);
+    //         // top line
+    //         g.drawLine(r.left - 10, r.top - 10, r.right + 10, r.top - 10);
+    //         // right line
+    //         g.drawLine(r.right + 10, r.top - 10, r.right + 10, r.bottom + 10);
+    //         // bottom line
+    //         g.drawLine(r.left - 10, r.bottom + 10, r.right + 10, r.bottom + 10);
+    //         // left line
+    //         g.drawLine(r.left - 10, r.top - 10, r.left - 10, r.bottom + 10);
 
-            g.drawRect(r.left - 15, r.top - 15, 10, 10);
-            g.drawRect(r.right + 5, r.top - 15, 10, 10);
-            g.drawRect(r.left - 15, r.bottom + 5, 10, 10);
-            g.drawRect(r.right + 5, r.bottom + 5, 10, 10);
-        }
-    }
+    //         g.drawRect(r.left - 15, r.top - 15, 10, 10);
+    //         g.drawRect(r.right + 5, r.top - 15, 10, 10);
+    //         g.drawRect(r.left - 15, r.bottom + 5, 10, 10);
+    //         g.drawRect(r.right + 5, r.bottom + 5, 10, 10);
+    //     }
+    // }
 
     @Override()
     public void paintComponent(Graphics g) {
@@ -97,7 +97,6 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
             g.drawLine((int) lastPoint.x, (int) lastPoint.y, (int) this.currentMouseX, (int) this.currentMouseY);
         }
 
-        this.drawFocusedIndicator(g);
     }
 
     @Override()
@@ -109,7 +108,7 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
             // This will make sure that if a shape is currently selected, it
             // will be deselected if the user clicks outside of the shape
             this.model.deselectAll();
-            
+
             CanvasObject shape = this.getClickedShape();
             if (shape != null) {
                 shape.setSelected(true);
