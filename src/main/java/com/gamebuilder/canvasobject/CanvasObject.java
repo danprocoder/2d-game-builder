@@ -9,6 +9,15 @@ import com.gamebuilder.canvasobject.shape.BoundingRect;
 
 public abstract class CanvasObject {
     private boolean selected = false;
+    private String resizeDirection = null;
+
+    public void setResizeDirection(String direction) {
+        this.resizeDirection = direction;
+    }
+
+    public String getResizeDirection() {
+        return this.resizeDirection;
+    }
 
     public abstract String getName();
     
@@ -20,7 +29,7 @@ public abstract class CanvasObject {
 
     public abstract void translate(Point p);
 
-    protected HashMap<String, BoundingRect> getResizeHandles() {
+    public HashMap<String, BoundingRect> getResizeHandles() {
         HashMap<String, BoundingRect> handles = new HashMap<String, BoundingRect>();
         BoundingRect r = this.getBoundingRect();
 
@@ -37,16 +46,32 @@ public abstract class CanvasObject {
         g.setColor(Color.BLACK);
 
         BoundingRect topLeft = handles.get("top_left");
-        g.drawRect(topLeft.left, topLeft.top, topLeft.right - topLeft.left, topLeft.bottom - topLeft.top);
+        if (this.resizeDirection == "top_left") {
+            g.fillRect(topLeft.left, topLeft.top, topLeft.right - topLeft.left, topLeft.bottom - topLeft.top);
+        } else {
+            g.drawRect(topLeft.left, topLeft.top, topLeft.right - topLeft.left, topLeft.bottom - topLeft.top);
+        }
 
         BoundingRect topRight = handles.get("top_right");
-        g.drawRect(topRight.left, topRight.top, topRight.right - topRight.left, topRight.bottom - topRight.top);
+        if (this.resizeDirection == "top_right") {
+            g.fillRect(topRight.left, topRight.top, topRight.right - topRight.left, topRight.bottom - topRight.top);
+        } else {
+            g.drawRect(topRight.left, topRight.top, topRight.right - topRight.left, topRight.bottom - topRight.top);
+        }
 
         BoundingRect bottomLeft = handles.get("bottom_left");
-        g.drawRect(bottomLeft.left, bottomLeft.top, bottomLeft.right - bottomLeft.left, bottomLeft.bottom - bottomLeft.top);
+        if (this.resizeDirection == "bottom_left") {
+            g.fillRect(bottomLeft.left, bottomLeft.top, bottomLeft.right - bottomLeft.left, bottomLeft.bottom - bottomLeft.top);
+        } else {
+            g.drawRect(bottomLeft.left, bottomLeft.top, bottomLeft.right - bottomLeft.left, bottomLeft.bottom - bottomLeft.top);
+        }
 
         BoundingRect bottomRight = handles.get("bottom_right");
-        g.drawRect(bottomRight.left, bottomRight.top, bottomRight.right - bottomRight.left, bottomRight.bottom - bottomRight.top);
+        if (this.resizeDirection == "bottom_right") {
+            g.fillRect(bottomRight.left, bottomRight.top, bottomRight.right - bottomRight.left, bottomRight.bottom - bottomRight.top);
+        } else {
+            g.drawRect(bottomRight.left, bottomRight.top, bottomRight.right - bottomRight.left, bottomRight.bottom - bottomRight.top);
+        }
 
         BoundingRect r = this.getBoundingRect();
         // top line
@@ -61,6 +86,10 @@ public abstract class CanvasObject {
 
     public void setSelected(boolean selected) {
         this.selected = selected;
+
+        if (selected == false) {
+            this.resizeDirection = null;
+        }
     }
 
     public boolean isSelected() {
