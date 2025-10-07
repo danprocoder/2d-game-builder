@@ -11,6 +11,7 @@ public class Polygon extends Shape {
     private Color color;
     private String name;
     private boolean transform = false;
+    private int transformPointIndex = -1;
 
     public Polygon(Point startingPoint, Color color, String name) {
         this.pts.add(startingPoint);
@@ -20,6 +21,18 @@ public class Polygon extends Shape {
 
     public void setTransform(boolean transform) {
         this.transform = transform;
+    }
+
+    public boolean getTransform() {
+        return this.transform;
+    }
+
+    public void setTransformPointIndex(int index) {
+        this.transformPointIndex = index;
+    }
+
+    public int getTransformPointIndex() {
+        return this.transformPointIndex;
     }
 
     public void addPoint(Point p) {

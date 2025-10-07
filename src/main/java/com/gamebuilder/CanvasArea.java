@@ -84,8 +84,13 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
                     selectedObject.setResizeDirection(dir);
                     this.rect = selectedObject.getBoundingRect();
                 } else if (selectedObject.getBoundingRect().hit(event.getX(), event.getY())) {
-                    selectedObject.setResizeDirection(null);
-                    this.rect = selectedObject.getBoundingRect();
+                    if (selectedObject instanceof Polygon) {
+                        Polygon p = (Polygon) selectedObject;
+                        p.setTransform(!p.getTransform());
+                    } else {
+                        selectedObject.setResizeDirection(null);
+                        this.rect = selectedObject.getBoundingRect();
+                    }
                 } else {
                     this.findAndSelectShape();
                 }
