@@ -1,11 +1,13 @@
 package com.gamebuilder;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+import javax.swing.JMenuBar;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 
 import com.gamebuilder.model.CanvasModel;
 
@@ -22,8 +24,9 @@ public class GameBuilder {
 
         JFrame frame = new JFrame("Game Builder");
         frame.setSize(850, 500);
-
         frame.setLayout(new BorderLayout());
+
+        frame.setJMenuBar(this.getMenuBar());
 
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Shapes", new ShapePanel(this));
@@ -43,6 +46,31 @@ public class GameBuilder {
         frame.setVisible(true);
     }
 
+    private JMenuBar getMenuBar() {
+        JMenuBar menuBar = new JMenuBar();
+
+        JMenu fileMenu = new JMenu("File");
+        fileMenu.add(new JMenuItem("New"));
+        fileMenu.add(new JMenuItem("Open"));
+        fileMenu.add(new JMenuItem("Save"));
+
+        JMenuItem exit = new JMenuItem("Exit");
+        exit.addActionListener(e -> this.exit());
+        fileMenu.add(exit);
+        menuBar.add(fileMenu);
+
+        // JMenu editMenu = new JMenu("Edit");
+        // editMenu.add(new JMenuItem("Undo"));
+        // editMenu.add(new JMenuItem("Redo"));
+        // menuBar.add(editMenu);
+
+        return menuBar;
+    }
+
+    private void exit() {
+        System.exit(0);
+    }
+
     public void onToolChanged(String tool) {
         this.canvas.setTool(tool);
     }
@@ -52,6 +80,6 @@ public class GameBuilder {
     }
 
     public static void main(String[] args) {
-        GameBuilder gameBuilder = new GameBuilder();
+        new GameBuilder();
     }
 }
