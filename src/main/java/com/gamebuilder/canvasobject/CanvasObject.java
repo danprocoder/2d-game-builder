@@ -10,6 +10,7 @@ import com.gamebuilder.canvasobject.shape.BoundingRect;
 public abstract class CanvasObject {
     private boolean selected = false;
     private String resizeDirection = null;
+    private String name;
 
     public void setResizeDirection(String direction) {
         this.resizeDirection = direction;
@@ -19,7 +20,13 @@ public abstract class CanvasObject {
         return this.resizeDirection;
     }
 
-    public abstract String getName();
+    public String getName() {
+        return this.name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
     
     public abstract BoundingRect getBoundingRect();
 

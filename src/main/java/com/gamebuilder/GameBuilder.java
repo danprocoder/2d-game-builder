@@ -9,20 +9,31 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 
+import com.gamebuilder.menu.NewMenuAction;
+import com.gamebuilder.menu.OpenMenuAction;
+import com.gamebuilder.menu.SaveMenuAction;
 import com.gamebuilder.model.CanvasModel;
+import com.gamebuilder.model.Project;
+import com.gamebuilder.model.ProjectModel;
+import com.gamebuilder.model.ProjectModelUpdateListener;
 
 class Assets extends JPanel {
 
 }
 
-public class GameBuilder {
+public class GameBuilder implements ProjectModelUpdateListener {
     CanvasArea canvas;
     private CanvasModel model;
+    private ProjectModel projectModel;
+    private JFrame frame;
 
     public GameBuilder() {
         this.model = new CanvasModel();
 
-        JFrame frame = new JFrame("Game Builder");
+        this.projectModel = new ProjectModel(this);
+        this.projectModel.addUpdateListener(this);
+
+        this.frame = new JFrame("Game Builder");
         frame.setSize(850, 500);
         frame.setLayout(new BorderLayout());
 
@@ -39,6 +50,7 @@ public class GameBuilder {
 
         LayersPanel layersPanel = new LayersPanel(this, model);
         model.addOnAddListener(layersPanel);
+        model.addUpdateListener(layersPanel);
         frame.add(layersPanel, BorderLayout.EAST);
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -50,12 +62,21 @@ public class GameBuilder {
         JMenuBar menuBar = new JMenuBar();
 
         JMenu fileMenu = new JMenu("File");
-        fileMenu.add(new JMenuItem("New"));
-        fileMenu.add(new JMenuItem("Open"));
-        fileMenu.add(new JMenuItem("Save"));
+
+        JMenuItem newProject = new JMenuItem("New");
+        newProject.addActionListener(new NewMenuAction(this.projectModel));
+        fileMenu.add(newProject);
+
+        JMenuItem openProject = new JMenuItem("Open");
+        openProject.addActionListener(new OpenMenuAction());
+        fileMenu.add(openProject);
+
+        JMenuItem saveProject = new JMenuItem("Save");
+        saveProject.addActionListener(new SaveMenuAction(this.projectModel));
+        fileMenu.add(saveProject);
 
         JMenuItem exit = new JMenuItem("Exit");
-        exit.addActionListener(e -> this.exit());
+        exit.addActionListener(e -> System.exit(0));
         fileMenu.add(exit);
         menuBar.add(fileMenu);
 
@@ -67,8 +88,10 @@ public class GameBuilder {
         return menuBar;
     }
 
-    private void exit() {
-        System.exit(0);
+    @Override()
+    public void onProjectModelUpdate() {
+        Project project = this.projectModel.getProject();
+        this.frame.setTitle(project.getName() + (project.isDirty() ? "*" : "") + " - Game Builder");
     }
 
     public void onToolChanged(String tool) {

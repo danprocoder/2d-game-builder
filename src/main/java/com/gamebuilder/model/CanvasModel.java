@@ -18,6 +18,17 @@ public class CanvasModel {
 
     private Color color = Color.RED;
 
+    private String selectedTool = null;
+
+    public String getSelectedTool() {
+        return this.selectedTool;
+    }
+
+    public void setSelectedTool(String tool) {
+        this.selectedTool = tool;
+        this.notifyUpdate();
+    }
+
     public void addObject(CanvasObject object) {
         this.shapes.add(object);
 
@@ -38,10 +49,15 @@ public class CanvasModel {
         return this.shapes;
     }
 
+    public CanvasObject getObjectAt(int index) {
+        return this.shapes.get(index);
+    }
+
     public void deselectAll() {
         for (CanvasObject shape: this.shapes) {
             shape.setSelected(false);
         }
+        this.notifyUpdate();
     }
 
     public CanvasObject getSelectedObject() {

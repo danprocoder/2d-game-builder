@@ -10,19 +10,13 @@ public class Rectangle extends Shape {
     private int width;
     private int height;
     private Color color;
-    private String name;
 
     public Rectangle(Point point, int width, int height, Color color, String name) {
         this.point = point;
         this.width = width;
         this.height = height;
         this.color = color;
-        this.name = name;
-    }
-
-    @Override()
-    public String getName() {
-        return this.name;
+        setName(name);
     }
 
     @Override()

@@ -16,15 +16,15 @@ import com.gamebuilder.canvasobject.shape.BoundingRect;
 import com.gamebuilder.canvasobject.shape.Circle;
 import com.gamebuilder.canvasobject.shape.Rectangle;
 import com.gamebuilder.model.CanvasModel;
+import com.gamebuilder.model.CanvasModelUpdateListener;
 
-public class CanvasArea extends JPanel implements MouseListener, MouseMotionListener {
+public class CanvasArea extends JPanel implements MouseListener, MouseMotionListener, CanvasModelUpdateListener {
 
-    private BoundingRect rect;
     private String selectedTool;
-    private float mouseStartX;
-    private float mouseStartY;
     private float currentMouseX;
     private float currentMouseY;
+    private float lastMouseDragX = 0;
+    private float lastMouseDragY = 0;
     private CanvasModel model;
 
     public CanvasArea(GameBuilder gameBuilder, CanvasModel model) {
@@ -32,14 +32,21 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
         addMouseMotionListener(this);
 
         this.model = model;
+        model.addUpdateListener(this);
+    }
+
+    @Override()
+    public void onCanvasModelUpdated(CanvasModel model) {
+        this.repaint();
     }
 
     @Override()
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        if (this.selectedTool != null) {
-            g.drawString(this.selectedTool, 20, 20);
+        String tool = this.model.getSelectedTool();
+        if (tool != null) {
+            g.drawString("Selected Tool: " + tool, 20, 20);
         }
     
         for (CanvasObject s: this.model.getObjects()) {
@@ -73,29 +80,30 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
 
     @Override()
     public void mousePressed(MouseEvent event) {
-        this.mouseStartX = event.getX();
-        this.mouseStartY = event.getY();
+        this.lastMouseDragX = event.getX();
+        this.lastMouseDragY = event.getY();
 
         if (this.selectedTool == "move") {
             CanvasObject selectedObject = this.model.getSelectedObject();
             if (selectedObject != null) {
-                String dir = this.isOverResizeHandle(selectedObject, event.getX(), event.getY());
-                if (dir != null) {
-                    selectedObject.setResizeDirection(dir);
-                    this.rect = selectedObject.getBoundingRect();
-                } else if (selectedObject.getBoundingRect().hit(event.getX(), event.getY())) {
-                    if (selectedObject instanceof Polygon) {
-                        Polygon p = (Polygon) selectedObject;
-                        p.setTransform(!p.getTransform());
-                    } else {
-                        selectedObject.setResizeDirection(null);
-                        this.rect = selectedObject.getBoundingRect();
-                    }
+                String resizeDir = this.isOverResizeHandle(selectedObject, event.getX(), event.getY());
+                int transformHandleIndex = -1;
+                if (selectedObject instanceof Polygon) {
+                    transformHandleIndex = this.isOverPolygonTransformHandle((Polygon) selectedObject, event.getX(), event.getY());
+                }
+                boolean clickInsideBox = selectedObject.getBoundingRect().hit(event.getX(), event.getY());
+
+                if (resizeDir != null) {
+                    selectedObject.setResizeDirection(resizeDir);
+                } else if (selectedObject instanceof Polygon && transformHandleIndex != -1) {
+                    ((Polygon) selectedObject).setTransformPointIndex(transformHandleIndex);
+                } else if (clickInsideBox) {
+                    this.handleClickInsideShape(selectedObject);
                 } else {
-                    this.findAndSelectShape();
+                    this.findAndSelectShape(event.getX(), event.getY());
                 }
             } else {
-                this.findAndSelectShape();
+                this.findAndSelectShape(event.getX(), event.getY());
             }
         } else if (this.selectedTool == "drawing_polygon") {
             Polygon p = (Polygon) this.model.getSelectedObject();
@@ -108,10 +116,8 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
                 this.selectedTool = "polygon";
             } else {
                 p.addPoint(nextPoint);
-
-                this.rect = p.getBoundingRect();
             }
-        } else {
+        } else if (this.selectedTool != null) {
             CanvasObject object = null;
             switch (this.selectedTool) {
                 case "polygon":
@@ -130,15 +136,22 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
                 this.model.deselectAll();
                 object.setSelected(true);
                 this.model.addObject(object);
-
-                this.rect = object.getBoundingRect();
             }
         }
 
         repaint();
     }
 
-    private CanvasObject getClickedShape() {
+    private void handleClickInsideShape(CanvasObject selectedObject) {
+        selectedObject.setResizeDirection(null);
+
+        if (selectedObject instanceof Polygon) {
+            Polygon p = (Polygon) selectedObject;
+            p.setTransform(!p.getTransform());
+        }
+    }
+
+    private CanvasObject getClickedShape(int mx, int my) {
         CanvasObject match = null;
         for (CanvasObject s: this.model.getObjects()) {
             if (s instanceof Polygon) {
@@ -150,25 +163,24 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
                     x[i] = (int) pts.get(i).x;
                     y[i] = (int) pts.get(i).y;
                 }
-                if (new java.awt.Polygon(x, y, x.length).contains(this.mouseStartX, this.mouseStartY)) {
+                if (new java.awt.Polygon(x, y, x.length).contains(mx, my)) {
                     match = s;
                 }
-            } else if (s.getBoundingRect().hit((int) this.mouseStartX, (int) this.mouseStartY)) {
+            } else if (s.getBoundingRect().hit(mx, my)) {
                 match = s;
             }
         }
         return match;
     }
 
-    public void findAndSelectShape() {
-        CanvasObject shape = this.getClickedShape();
+    public void findAndSelectShape(int mx, int my) {
+        CanvasObject shape = this.getClickedShape(mx, my);
         if (shape != null) {
             this.model.deselectAll();
             shape.setSelected(true);
-            this.rect = shape.getBoundingRect();
+            this.model.notifyUpdate();
         } else {
             this.model.deselectAll();
-            this.rect = null;
         }
     }
 
@@ -183,8 +195,20 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
         return null;
     }
 
+    private int isOverPolygonTransformHandle(Polygon shape, int mouseX, int mouseY) {
+        ArrayList<BoundingRect> boxes = shape.getTransformBoxes();
+        for (int i = 0; i < boxes.size(); i++) {
+            if (boxes.get(i).hit(mouseX, mouseY)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     public void increaseSizeBy(int dx, int dy) {
         CanvasObject selectedObject = this.model.getSelectedObject();
+
+        BoundingRect rect = selectedObject.getBoundingRect();
         if (selectedObject.getResizeDirection() == "bottom_right") {
             selectedObject.setSize(rect.right - rect.left + dx, rect.bottom - rect.top + dy);
         } else if (selectedObject.getResizeDirection() == "bottom_left") {
@@ -206,25 +230,33 @@ public class CanvasArea extends JPanel implements MouseListener, MouseMotionList
 
     @Override()
     public void mouseDragged(MouseEvent event) {
+        int mx = event.getX();
+        int my = event.getY();
+
         CanvasObject selectedObject = this.model.getSelectedObject();
         if (selectedObject == null) return;
 
         if (this.selectedTool == "circle" || this.selectedTool == "rect") {
             BoundingRect r = selectedObject.getBoundingRect();
-            selectedObject.setSize(Math.abs(event.getX() - r.left), Math.abs(event.getY() - r.top));
+            selectedObject.setSize(Math.abs(mx - r.left), Math.abs(my - r.top));
         } else if (this.selectedTool == "move") {
-            if (this.rect != null) {
-                int dx = (int) (event.getX() - this.mouseStartX);
-                int dy = (int) (event.getY() - this.mouseStartY);
-                
-                String resizeDir = selectedObject.getResizeDirection();
-                if (resizeDir != null) {
+            BoundingRect r = selectedObject.getBoundingRect();
+            if (r != null) {
+                int dx = (int) (mx - this.lastMouseDragX);
+                int dy = (int) (my - this.lastMouseDragY);
+
+                if (selectedObject.getResizeDirection() != null) {
                     this.increaseSizeBy(dx, dy);
+                } else if (selectedObject instanceof Polygon && ((Polygon) selectedObject).getTransformPointIndex() != -1) {
+                    ((Polygon) selectedObject).moveTransformPoint(dx, dy);
                 } else {
-                    selectedObject.translate(new Point(this.rect.left + dx, this.rect.top + dy));
+                    selectedObject.translate(new Point(r.left + dx, r.top + dy));
                 }
             }
         }
+
+        this.lastMouseDragX = mx;
+        this.lastMouseDragY = my;
 
         repaint();
     }

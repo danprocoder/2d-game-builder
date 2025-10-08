@@ -9,18 +9,21 @@ import com.gamebuilder.Point;
 public class Polygon extends Shape {
     private ArrayList<Point> pts = new ArrayList<Point>();
     private Color color;
-    private String name;
     private boolean transform = false;
     private int transformPointIndex = -1;
 
     public Polygon(Point startingPoint, Color color, String name) {
         this.pts.add(startingPoint);
         this.color = color;
-        this.name = name;
+        setName(name);
     }
 
     public void setTransform(boolean transform) {
         this.transform = transform;
+
+        if (transform == false) {
+            this.transformPointIndex = -1;
+        }
     }
 
     public boolean getTransform() {
@@ -35,6 +38,14 @@ public class Polygon extends Shape {
         return this.transformPointIndex;
     }
 
+    public void moveTransformPoint(int dx, int dy) {
+        if (this.transformPointIndex != -1 && this.transformPointIndex < this.pts.size()) {
+            Point pt = this.pts.get(this.transformPointIndex);
+            pt.x += dx;
+            pt.y += dy;
+        }
+    }
+
     public void addPoint(Point p) {
         this.pts.add(p);
     }
@@ -44,16 +55,12 @@ public class Polygon extends Shape {
     }
 
     @Override()
-    public String getName() {
-        return this.name;
-    }
-
-    @Override()
     public void setSelected(boolean selected) {
         super.setSelected(selected);
 
         if (selected == false) {
             this.transform = false;
+            this.transformPointIndex = -1;
         }
     }
 
@@ -74,7 +81,7 @@ public class Polygon extends Shape {
         return new BoundingRect(minY, maxX, maxY, minX);
     }
 
-    private ArrayList<BoundingRect> getTransformBoxes() {
+    public ArrayList<BoundingRect> getTransformBoxes() {
         ArrayList<BoundingRect> boxes = new ArrayList<BoundingRect>();
         for (Point pt: this.pts) {
             boxes.add(
@@ -91,7 +98,18 @@ public class Polygon extends Shape {
 
     @Override()
     public void setSize(int width, int height) {
+        BoundingRect r = this.getBoundingRect();
+        float scaleX = (float) width / (r.right - r.left);
+        float scaleY = (float) height / (r.bottom - r.top);
 
+        // Resize around center
+        float cx = (r.right - r.left) / 2;
+        float cy = (r.bottom - r.top) / 2;
+
+        for (Point pt: this.pts) {
+            pt.x = cx + (scaleX * (pt.x - cx));
+            pt.y = cy + (scaleY * (pt.y - cy));
+        }
     }
 
     @Override()
@@ -122,7 +140,12 @@ public class Polygon extends Shape {
             g.setColor(Color.BLACK);
             for (int i = 0; i < boxes.size(); i++) {
                 BoundingRect box = boxes.get(i);
-                g.drawRect(box.left, box.top, box.right - box.left, box.bottom - box.top);
+
+                if (this.transformPointIndex != -1 && this.transformPointIndex == i) {
+                    g.fillRect(box.left, box.top, box.right - box.left, box.bottom - box.top);
+                } else {
+                    g.drawRect(box.left, box.top, box.right - box.left, box.bottom - box.top);
+                }
 
                 g.drawLine(
                     box.left + 5,

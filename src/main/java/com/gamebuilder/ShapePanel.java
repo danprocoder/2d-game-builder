@@ -169,6 +169,7 @@ public class ShapePanel extends JPanel {
             @Override()
             public void actionPerformed(ActionEvent e) {
                 toolEnabled = MOVE_TOOL;
+                gameBuilder.getModel().setSelectedTool(MOVE_TOOL);
                 gameBuilder.onToolChanged(toolEnabled);
             }
         });
@@ -177,6 +178,7 @@ public class ShapePanel extends JPanel {
             @Override()
             public void actionPerformed(ActionEvent e) {
                 toolEnabled = HAND_TOOL;
+                gameBuilder.getModel().setSelectedTool(HAND_TOOL);
                 gameBuilder.onToolChanged(toolEnabled);
             }
         });
@@ -185,6 +187,7 @@ public class ShapePanel extends JPanel {
             @Override()
             public void actionPerformed(ActionEvent e) {
                 toolEnabled = POLYGON_TOOL;
+                gameBuilder.getModel().setSelectedTool(POLYGON_TOOL);
                 gameBuilder.onToolChanged(toolEnabled);
             }
         });
@@ -193,6 +196,7 @@ public class ShapePanel extends JPanel {
             @Override()
             public void actionPerformed(ActionEvent e) {
                 toolEnabled = CIRCLE_TOOL;
+                gameBuilder.getModel().setSelectedTool(CIRCLE_TOOL);
                 gameBuilder.onToolChanged(toolEnabled);
             }
         });
@@ -201,6 +205,7 @@ public class ShapePanel extends JPanel {
             @Override()
             public void actionPerformed(ActionEvent e) {
                 toolEnabled = RECT_TOOL;
+                gameBuilder.getModel().setSelectedTool(RECT_TOOL);
                 gameBuilder.onToolChanged(toolEnabled);
             }
         });
