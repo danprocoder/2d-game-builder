@@ -24,7 +24,7 @@ public class AssetModel {
             throw new Exception("Asset directory does not exists: " + directory);
         }
 
-        if (dir.isDirectory()) {
+        if (!dir.isDirectory()) {
             throw new Exception("Asset path is not a directory: " + directory);
         }
 
