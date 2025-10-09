@@ -3,28 +3,16 @@ package com.gamebuilder.menu;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Paths;
 
 import javax.swing.JFileChooser;
 
 import com.gamebuilder.model.Project;
 import com.gamebuilder.model.ProjectModel;
+import com.gamebuilder.model.ProjectTemplate;
 
-class ProjectTemplate {
-    static String[] getDefaultDirectories() {
-        return new String[] {
-            "main/java",
-            "main/resources",
-        };
-    }
-
-    static String[] getDefaultFiles() {
-        return new String[] {
-            "main/java/App.java",
-            "main/resources/objects.json"
-        };
-    }
-}
 
 public class SaveMenuAction implements ActionListener {
     ProjectModel projectModel;
@@ -45,7 +33,6 @@ public class SaveMenuAction implements ActionListener {
         String directory = project.getDirectory();
         if (directory != null) {
             if (new File(directory).exists()) {
-                this.updateObjectsFile(project);
                 project.setDirty(false);
             } else {
                 // TODO: show unable to save alert
@@ -84,13 +71,24 @@ public class SaveMenuAction implements ActionListener {
         for (String file: ProjectTemplate.getDefaultFiles()) {
             try {
                 Paths.get(path, file).toFile().createNewFile();
-            } catch (Exception ex) {
+            } catch (IOException ex) {
                 ex.printStackTrace();
             }
         }
-    }
 
-    private void updateObjectsFile(Project project) {
-        // TODO: write objects file
+        try {
+            File projectFile = Paths.get(path, ProjectTemplate.getProjectFile()).toFile();
+            PrintWriter out = new PrintWriter(projectFile, "UTF-8");
+            out.println("<project>");
+
+            Project project = this.projectModel.getProject();
+            out.println("    <name>" + project.getName() + "</name>");
+
+            out.println("    <version>1.0</version>");
+            out.println("</project>");
+            out.close();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
 }
