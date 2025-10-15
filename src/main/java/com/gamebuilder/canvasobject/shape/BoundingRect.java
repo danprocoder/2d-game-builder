@@ -13,6 +13,15 @@ public class BoundingRect {
         this.left = left;
     }
 
+    public BoundingRect grow(int size) {
+        return new BoundingRect(
+            this.top - size,
+            this.right + size,
+            this.bottom + size,
+            this.left - size
+        );
+    }
+
     public boolean hit(int x, int y) {
         return x >= this.left && x <= this.right && y >= this.top && y <= this.bottom;
     }
