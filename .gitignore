@@ -7,3 +7,7 @@ gradle
 *.zip
 
 .DS_Store
+
+bin
+
+settings.json
