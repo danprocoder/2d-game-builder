@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 
 import com.gamebuilder.Point;
+import com.gamebuilder.util.ColorHelper;
 
 public class Polygon extends Shape {
     private ArrayList<Point> pts = new ArrayList<Point>();
@@ -16,6 +17,164 @@ public class Polygon extends Shape {
         this.pts.add(startingPoint);
         this.color = color;
         setName(name);
+    }
+
+    public Polygon(ArrayList<Point> points, Color color, String name) {
+        this.pts = points;
+        this.color = color;
+        setName(name);
+    }
+
+    public Color getColor() {
+        return this.color;
+    }
+
+    public void setColor(Color color) {
+        this.color = color;
+    }
+
+    public void addPoint(Point p) {
+        this.pts.add(p);
+    }
+
+    /**
+     * Adds a new point to the index provided, add points currently at index and above will be shifted
+     * to the right.
+     *
+     * @param index the index to insert at
+     * @param newPoint the point to insert
+     */
+    public void insertPointAt(int index, Point newPoint) {
+        this.pts.add(index, newPoint);
+    }
+
+    public ArrayList<Point> getPoints() {
+        return this.pts;
+    }
+
+    /** Returns the point at the provided index */
+    public Point getPointAt(int index) {
+        return this.pts.get(index);
+    }
+
+    /**
+     * Sets the polygon state to selected. If polygon is currently in transform mode and
+     * 
+     */
+    @Override()
+    public void setSelected(boolean selected) {
+        if (selected == false) {
+            this.transform = false;
+            this.transformPointIndex = -1;
+        }
+
+        super.setSelected(selected);
+    }
+
+    @Override()
+    public boolean mouseHit(int mx, int my) {
+        int numPoints = this.pts.size();
+        int x[] = new int[numPoints];
+        int y[] = new int[numPoints];
+        for (int i = 0; i < numPoints; i++) {
+            x[i] = getOffsetX() + pts.get(i).getXInt();
+            y[i] = getOffsetY() + pts.get(i).getYInt();
+        }
+        return new java.awt.Polygon(x, y, x.length).contains(mx, my);
+    }
+
+    @Override()
+    public int getWidth() {
+        BoundingRect r = this.getBoundingRect();
+        return r.right - r.left;
+    }
+
+    @Override()
+    public int getHeight() {
+        BoundingRect r = this.getBoundingRect();
+        return r.bottom - r.top;
+    }
+
+    @Override()
+    public BoundingRect getBoundingRect() {
+        int minX = Integer.MAX_VALUE;
+        int minY = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int maxY = Integer.MIN_VALUE;
+
+        for (Point pt: this.pts) {
+            if (pt.x < minX) minX = pt.getXInt();
+            if (pt.x > maxX) maxX = pt.getXInt();
+            if (pt.y < minY) minY = pt.getYInt();
+            if (pt.y > maxY) maxY = pt.getYInt();
+        }
+
+        return new BoundingRect(
+            getOffsetY() + minY,
+            getOffsetX() + maxX,
+            getOffsetY() + maxY,
+            getOffsetX() + minX
+        );
+    }
+
+    @Override()
+    public void setSize(int width, int height) {
+        BoundingRect r = this.getBoundingRect();
+        float scaleX = (float) width / (r.right - r.left);
+        float scaleY = (float) height / (r.bottom - r.top);
+
+        // Resize around center
+        float cx = (r.right - r.left) / 2;
+        float cy = (r.bottom - r.top) / 2;
+
+        for (Point pt: this.pts) {
+            pt.x = cx + (scaleX * (pt.x - cx));
+            pt.y = cy + (scaleY * (pt.y - cy));
+        }
+    }
+
+    @Override()
+    public void translate(int dx, int dy) {
+        for (Point pt: this.pts) {
+            pt.x += dx;
+            pt.y += dy;
+        }
+    }
+
+    @Override()
+    public void draw(Graphics g) {
+        // TODO: optimize this
+        g.setColor(this.color);
+
+        int numPoints = this.pts.size();
+        int[] x = new int[numPoints];
+        int[] y = new int[numPoints];
+        for (int i = 0; i < numPoints; i++) {
+            Point pt = this.pts.get(i);
+            x[i] = getOffsetX() + pt.getXInt();
+            y[i] = getOffsetY() + pt.getYInt();
+        }
+        g.fillPolygon(x, y, numPoints);
+
+        if (this.transform) {
+            ArrayList<BoundingRect> boxes = this.getTransformBoxes();
+            for (int i = 0; i < boxes.size(); i++) {
+                BoundingRect box = boxes.get(i);
+
+                g.setColor(Color.BLACK);
+                g.drawLine(
+                    box.left + 5,
+                    box.top + 5,
+                    boxes.get(i + 1 < boxes.size() ? i + 1 : 0).left + 5,
+                    boxes.get(i + 1 < boxes.size() ? i + 1 : 0).top + 5
+                );
+
+                if (1 != 0) {
+                    drawTransformBoxes(g, i);
+                }
+            }
+            drawTransformBoxes(g, 0);
+        }
     }
 
     public void setTransform(boolean transform) {
@@ -38,47 +197,26 @@ public class Polygon extends Shape {
         return this.transformPointIndex;
     }
 
-    public void moveTransformPoint(int dx, int dy) {
-        if (this.transformPointIndex != -1 && this.transformPointIndex < this.pts.size()) {
-            Point pt = this.pts.get(this.transformPointIndex);
+    public void moveTransformPoint(int index, int dx, int dy) {
+        if (index >= 0 && index < this.pts.size()) {
+            Point pt = this.pts.get(index);
             pt.x += dx;
             pt.y += dy;
         }
     }
 
-    public void addPoint(Point p) {
-        this.pts.add(p);
-    }
+    private void drawTransformBoxes(Graphics g, int index) {
+        BoundingRect box = this.getTransformBoxes().get(index);
+        if (this.transformPointIndex == index) {
+            g.setColor(Color.BLACK);
+            g.fillRect(box.left, box.top, box.right - box.left, box.bottom - box.top);
+        } else {
+            g.setColor(Color.WHITE);
+            g.fillOval(box.left, box.top, box.right - box.left, box.bottom - box.top);
 
-    public ArrayList<Point> getPoints() {
-        return this.pts;
-    }
-
-    @Override()
-    public void setSelected(boolean selected) {
-        super.setSelected(selected);
-
-        if (selected == false) {
-            this.transform = false;
-            this.transformPointIndex = -1;
+            g.setColor(Color.BLACK);
+            g.drawOval(box.left, box.top, box.right - box.left, box.bottom - box.top);
         }
-    }
-
-    @Override()
-    public BoundingRect getBoundingRect() {
-        int minX = Integer.MAX_VALUE;
-        int minY = Integer.MAX_VALUE;
-        int maxX = Integer.MIN_VALUE;
-        int maxY = Integer.MIN_VALUE;
-
-        for (Point pt: this.pts) {
-            if (pt.x < minX) minX = (int) pt.x;
-            if (pt.x > maxX) maxX = (int) pt.x;
-            if (pt.y < minY) minY = (int) pt.y;
-            if (pt.y > maxY) maxY = (int) pt.y;
-        }
-
-        return new BoundingRect(minY, maxX, maxY, minX);
     }
 
     public ArrayList<BoundingRect> getTransformBoxes() {
@@ -86,76 +224,50 @@ public class Polygon extends Shape {
         for (Point pt: this.pts) {
             boxes.add(
                 new BoundingRect(
-                    (int) (pt.y - 5),
-                    (int) (pt.x + 5),
-                    (int) (pt.y + 5),
-                    (int) (pt.x - 5)
+                    getOffsetY() + pt.getYInt() - 5,
+                    getOffsetX() + pt.getXInt() + 5,
+                    getOffsetY() + pt.getYInt() + 5,
+                    getOffsetX() + pt.getXInt() - 5
                 )
             );
         }
         return boxes;
     }
 
+    // TODO: optimise this
     @Override()
-    public void setSize(int width, int height) {
-        BoundingRect r = this.getBoundingRect();
-        float scaleX = (float) width / (r.right - r.left);
-        float scaleY = (float) height / (r.bottom - r.top);
-
-        // Resize around center
-        float cx = (r.right - r.left) / 2;
-        float cy = (r.bottom - r.top) / 2;
-
-        for (Point pt: this.pts) {
-            pt.x = cx + (scaleX * (pt.x - cx));
-            pt.y = cy + (scaleY * (pt.y - cy));
-        }
+    public String getTooltipText() {
+        BoundingRect box = this.getBoundingRect();
+        return String.format(
+            "%s (x: %d, y: %d, w: %d, h: %d)",
+            this.name,
+            box.left,
+            box.top,
+            box.right - box.left,
+            box.bottom - box.top
+        );
     }
 
     @Override()
-    public void translate(Point p) {
-        BoundingRect r = this.getBoundingRect();
+    public String toXml() {
+        StringBuilder xml = new StringBuilder();
+        xml.append(
+            String.format(
+                "\n<Polygon name=\"%s\" color=\"%s\">",
+                this.getName(),
+                ColorHelper.getHexFromColor(this.color)
+            )
+        );
         for (Point pt: this.pts) {
-            int dx = (int) (p.x - r.left);
-            int dy = (int) (p.y - r.top);
-            pt.x += dx;
-            pt.y += dy;
+            xml.append(
+                String.format(
+                    "\n  <Point x=\"%d\" y=\"%d\" />",
+                    pt.getXInt(),
+                    pt.getYInt()
+                )
+            );
         }
-    }
-
-    @Override()
-    public void draw(Graphics g) {
-        g.setColor(this.color);
-        
-        int[] x = new int[this.pts.size()];
-        int[] y = new int[this.pts.size()];
-        for (int i = 0; i < this.pts.size(); i++) {
-            x[i] = (int) this.pts.get(i).x;
-            y[i] = (int) this.pts.get(i).y;
-        }
-        g.fillPolygon(x, y, this.pts.size());
-
-        if (this.transform) {
-            ArrayList<BoundingRect> boxes = this.getTransformBoxes();
-            g.setColor(Color.BLACK);
-            for (int i = 0; i < boxes.size(); i++) {
-                BoundingRect box = boxes.get(i);
-
-                if (this.transformPointIndex != -1 && this.transformPointIndex == i) {
-                    g.fillRect(box.left, box.top, box.right - box.left, box.bottom - box.top);
-                } else {
-                    g.drawRect(box.left, box.top, box.right - box.left, box.bottom - box.top);
-                }
-
-                g.drawLine(
-                    box.left + 5,
-                    box.top + 5,
-                    boxes.get(i + 1 < boxes.size() ? i + 1 : 0).left + 5,
-                    boxes.get(i + 1 < boxes.size() ? i + 1 : 0).top + 5
-                );
-            }
-        } else if (this.isSelected()) {
-            this.drawResizeHandles(g);
-        }
+        xml.append("\n</Polygon>");
+        return xml.toString();
     }
 }

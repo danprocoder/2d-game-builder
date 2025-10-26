@@ -3,6 +3,13 @@ package com.gamebuilder.model;
 import java.io.File;
 import java.util.ArrayList;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.NodeList;
+
 public class AssetModel {
     private ArrayList<Asset> assets = new ArrayList<>();
     private ArrayList<AssetModelUpdateListener> updateListeners = new ArrayList<>();
@@ -18,23 +25,39 @@ public class AssetModel {
         return instance;
     }
 
-    public void loadFromDirectory(String directory) throws Exception {
-        File dir = new File(directory);
-        if (!dir.exists()) {
-            throw new Exception("Asset directory does not exists: " + directory);
+    /** Parses the asset xml from the asset.xml file. */
+    public void loadFromFile(String filePath) throws Exception {
+        File file = new File(filePath);
+        if (!file.exists()) {
+            throw new Exception("Asset file does not exist: " + filePath);
+        } else if (!file.isFile()) {
+            throw new Exception("Asset path is not a file: " + filePath);
         }
 
-        if (!dir.isDirectory()) {
-            throw new Exception("Asset path is not a directory: " + directory);
-        }
+        DocumentBuilder docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+        Document doc = docBuilder.parse(file);
 
-        for (File file: dir.listFiles()) {
-            if (file.isFile()) {
-                Asset asset = new Asset(file.getAbsolutePath());
-                this.assets.add(asset);
+        NodeList assetNodes = doc.getElementsByTagName("Assets").item(0).getChildNodes();
+        for (int i = 0; i < assetNodes.getLength(); i++) {
+            if (assetNodes.item(i).getNodeName().equals("AssetItem")) {
+                NamedNodeMap attributes = assetNodes.item(i).getAttributes();
+                String id = attributes.getNamedItem("id").getNodeValue();
+                String path = attributes.getNamedItem("path").getNodeValue();
+                String name = attributes.getNamedItem("name").getNodeValue();
+                Asset asset = new Asset(id, path, name);
+                assets.add(asset);
             }
         }
         this.notifyUpdate();
+    }
+
+    public Asset getById(String id) {
+        for (Asset a: assets) {
+            if (a.getId().equals(id)) {
+                return a;
+            }
+        }
+        return null;
     }
 
     public void addAsset(Asset asset) {

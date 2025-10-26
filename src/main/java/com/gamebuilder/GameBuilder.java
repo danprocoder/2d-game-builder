@@ -3,99 +3,73 @@ package com.gamebuilder;
 import java.awt.BorderLayout;
 
 import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JTabbedPane;
-import javax.swing.JMenuBar;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
 
-import com.gamebuilder.menu.NewMenuAction;
-import com.gamebuilder.menu.OpenMenuAction;
-import com.gamebuilder.menu.SaveMenuAction;
+import com.gamebuilder.model.AssetModel;
 import com.gamebuilder.model.CanvasModel;
 import com.gamebuilder.model.Project;
 import com.gamebuilder.model.ProjectModel;
 import com.gamebuilder.model.ProjectModelUpdateListener;
-
-class Assets extends JPanel {
-
-}
+import com.gamebuilder.model.SceneModel;
+import com.gamebuilder.service.CanvasService;
+import com.gamebuilder.service.SceneService;
+import com.gamebuilder.util.LogThread;
+import com.gamebuilder.view.CanvasView;
+import com.gamebuilder.view.GameEditorView;
+import com.gamebuilder.view.MenuBarView;
 
 public class GameBuilder implements ProjectModelUpdateListener {
-    CanvasArea canvas;
+    CanvasView canvas;
     private CanvasModel model;
+    private CanvasService canvasService;
+    private SceneService sceneService;
     private ProjectModel projectModel;
+    private AssetModel assetModel;
     private JFrame frame;
 
     public GameBuilder() {
+        LogThread.getInstance().start();
+        
         this.model = new CanvasModel();
+        this.canvasService = new CanvasService(this.model);
+        this.sceneService = new SceneService(new SceneModel());
+
+        this.assetModel = AssetModel.getInstance();
 
         this.projectModel = new ProjectModel(this);
         this.projectModel.addUpdateListener(this);
 
         this.frame = new JFrame("Game Builder");
-        frame.setSize(850, 500);
+        frame.setSize(1024, 700);
         frame.setLayout(new BorderLayout());
 
-        frame.setJMenuBar(this.getMenuBar());
+        frame.setJMenuBar(
+            new MenuBarView(
+                this.frame,
+                this.canvasService,
+                this.sceneService,
+                this.projectModel
+            )
+        );
 
-        JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.addTab("Shapes", new ShapePanel(this));
-        tabbedPane.addTab("Assets", new Assets());
-
-        frame.add(tabbedPane, BorderLayout.WEST);
-
-        this.canvas = new CanvasArea(this, model);
-        frame.add(this.canvas, BorderLayout.CENTER);
-
-        LayersPanel layersPanel = new LayersPanel(this, model);
-        model.addOnAddListener(layersPanel);
-        model.addUpdateListener(layersPanel);
-        frame.add(layersPanel, BorderLayout.EAST);
+        frame.add(
+            new GameEditorView(
+                this.projectModel,
+                this.assetModel,
+                this.sceneService,
+                this.canvasService
+            ),
+            BorderLayout.CENTER
+        );
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
     }
 
-    private JMenuBar getMenuBar() {
-        JMenuBar menuBar = new JMenuBar();
-
-        JMenu fileMenu = new JMenu("File");
-
-        JMenuItem newProject = new JMenuItem("New");
-        newProject.addActionListener(new NewMenuAction(this.projectModel));
-        fileMenu.add(newProject);
-
-        JMenuItem openProject = new JMenuItem("Open");
-        openProject.addActionListener(new OpenMenuAction());
-        fileMenu.add(openProject);
-
-        JMenuItem saveProject = new JMenuItem("Save");
-        saveProject.addActionListener(new SaveMenuAction(this.projectModel));
-        fileMenu.add(saveProject);
-
-        JMenuItem exit = new JMenuItem("Exit");
-        exit.addActionListener(e -> System.exit(0));
-        fileMenu.add(exit);
-        menuBar.add(fileMenu);
-
-        // JMenu editMenu = new JMenu("Edit");
-        // editMenu.add(new JMenuItem("Undo"));
-        // editMenu.add(new JMenuItem("Redo"));
-        // menuBar.add(editMenu);
-
-        return menuBar;
-    }
-
     @Override()
     public void onProjectModelUpdate() {
         Project project = this.projectModel.getProject();
         this.frame.setTitle(project.getName() + (project.isDirty() ? "*" : "") + " - Game Builder");
-    }
-
-    public void onToolChanged(String tool) {
-        this.canvas.setTool(tool);
     }
 
     public CanvasModel getModel() {

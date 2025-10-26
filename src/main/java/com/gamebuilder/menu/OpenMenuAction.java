@@ -2,19 +2,23 @@ package com.gamebuilder.menu;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.nio.file.Paths;
 
 import javax.swing.JFileChooser;
 
-import com.gamebuilder.model.AssetModel;
 import com.gamebuilder.model.ProjectModel;
-import com.gamebuilder.model.ProjectTemplate;
+import com.gamebuilder.service.CanvasService;
+import com.gamebuilder.service.OpenProjectService;
+import com.gamebuilder.service.SceneService;
 
 public class OpenMenuAction implements ActionListener {
-    public ProjectModel projectModel;
+    private ProjectModel projectModel;
+    private CanvasService canvasService;
+    private SceneService sceneService;
 
-    public OpenMenuAction(ProjectModel projectModel) {
+    public OpenMenuAction(CanvasService canvasService, ProjectModel projectModel, SceneService sceneService) {
+        this.canvasService = canvasService;
         this.projectModel = projectModel;
+        this.sceneService = sceneService;
     }
 
     @Override()
@@ -23,29 +27,10 @@ public class OpenMenuAction implements ActionListener {
         fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         int returnValue = fileChooser.showOpenDialog(null);
         if (returnValue == JFileChooser.APPROVE_OPTION) {
+            OpenProjectService service = new OpenProjectService(this.canvasService, this.projectModel, this.sceneService);
+
             String directory = fileChooser.getSelectedFile().getPath();
-            this.openProject(directory);
+            service.openProject(directory);
         }
-    }
-
-    private void openProject(String directory) {
-        try {
-            this.projectModel.loadProject(directory);
-
-            this.loadAssets(directory);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    private void loadAssets(String directory) throws Exception {
-        AssetModel assetModel = AssetModel.getInstance();
-        assetModel.loadFromDirectory(
-            Paths.get(directory, ProjectTemplate.getImageDirectory()).toString()
-        );
-        assetModel.loadFromDirectory(
-            Paths.get(directory, ProjectTemplate.getSoundDirectory()).toString()
-        );
     }
 }

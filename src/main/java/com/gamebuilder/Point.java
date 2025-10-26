@@ -28,4 +28,10 @@ public class Point {
     public String toString() {
         return "(" + this.x + ", " + this.y + ")";
     }
+
+    @Override()
+    public boolean equals(Object obj) {
+        Point p = (Point) obj;
+        return p != null && p.x == this.x && p.y == this.y;
+    }
 }

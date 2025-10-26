@@ -9,6 +9,13 @@ public class ProjectTemplate {
         };
     }
 
+    public static String[] getDefaultFiles() {
+        return new String[] {
+            "main/java/App.java",
+            "main/resources/objects.xml",
+        };
+    }
+
     public static String getProjectFile() {
         return "project.xml";
     }
@@ -25,14 +32,15 @@ public class ProjectTemplate {
         return "main/resources/assets/sounds";
     }
 
-    public static String getObjectFile() {
-        return "main/resources/objects.xml";
+    public static String getSceneFile() {
+        return "main/resources/scenes.xml";
     }
 
-    public static String[] getDefaultFiles() {
-        return new String[] {
-            "main/java/App.java",
-            "main/resources/objects.xml",
-        };
+    public static String getAssetFile() {
+        return "main/resources/assets.xml";
+    }
+
+    public static String getObjectFile() {
+        return "main/resources/objects.xml";
     }
 }

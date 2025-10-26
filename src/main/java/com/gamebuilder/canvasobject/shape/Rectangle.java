@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 
 import com.gamebuilder.Point;
+import com.gamebuilder.util.ColorHelper;
 
 public class Rectangle extends Shape {
     private Point point;
@@ -19,13 +20,58 @@ public class Rectangle extends Shape {
         setName(name);
     }
 
+    public Color getColor() {
+        return this.color;
+    }
+
+    public void setColor(Color color) {
+        this.color = color;
+    }
+
+    public int getX() {
+        return (int) this.point.x;
+    }
+
+    public int getY() {
+        return (int) this.point.y;
+    }
+
+    public void setX(int x) {
+        this.point = new Point(x, this.point.y);
+    }
+
+    public void setY(int y) {
+        this.point = new Point(this.point.x, y);
+    }
+
+    public int getWidth() {
+        return this.width;
+    }
+
+    public void setWidth(int width) {
+        this.width = width;
+    }
+
+    public int getHeight() {
+        return this.height;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
+    }
+
+    @Override()
+    public boolean mouseHit(int mx, int my) {
+        return this.getBoundingRect().hit(mx, my);
+    }
+
     @Override()
     public BoundingRect getBoundingRect() {
         return new BoundingRect(
-            (int) this.point.y,
-            (int) this.point.x + this.width,
-            (int) this.point.y + this.height,
-            (int) this.point.x
+            getOffsetY() + this.point.getYInt(),
+            getOffsetX() + this.point.getXInt() + this.width,
+            getOffsetY() + this.point.getYInt() + this.height,
+            getOffsetX() + this.point.getXInt()
         );
     }
 
@@ -36,17 +82,43 @@ public class Rectangle extends Shape {
     }
 
     @Override()
-    public void translate(Point p) {
-        this.point = new Point(p.x, p.y);
+    public void translate(int dx, int dy) {
+        this.point = new Point(this.point.x + dx, this.point.y + dy);
     }
 
     @Override()
     public void draw(Graphics g) {
         g.setColor(this.color);
-        g.fillRect((int) this.point.x, (int) this.point.y, this.width, this.height);
+        g.fillRect(
+            getOffsetX() + this.point.getXInt(),
+            getOffsetY() + this.point.getYInt(),
+            this.width,
+            this.height
+        );
+    }
 
-        if (this.isSelected()) {
-            this.drawResizeHandles(g);
-        }
+    @Override()
+    public String getTooltipText() {
+        return String.format(
+            "%s (x: %d, y: %d, w: %d, h: %d)",
+            this.name,
+            (int) this.point.getXInt(),
+            (int) this.point.getYInt(),
+            this.width,
+            this.height
+        );
+    }
+
+    @Override()
+    public String toXml() {
+        return String.format(
+            "\n<Rectangle name=\"%s\" x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" color=\"%s\" />",
+            this.getName(),
+            (int) this.point.x,
+            (int) this.point.y,
+            this.width,
+            this.height,
+            ColorHelper.getHexFromColor(this.color)
+        );
     }
 }

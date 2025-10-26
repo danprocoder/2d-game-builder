@@ -42,16 +42,15 @@ public class AssetsPanel extends JPanel implements AssetModelUpdateListener {
         this.showView();
     }
 
-    @Override
+    @Override()
     public void onAssetModelUpdated() {
         this.showView();
     }
 
     private void showView() {
         this.removeAll();
-        this.add(new JLabel("Assets"));
 
-        JButton importBtn = new JButton("Import Asset");
+        JButton importBtn = new JButton("Import File");
         importBtn.addActionListener(e -> importAsset());
         this.add(importBtn);
 
@@ -66,15 +65,17 @@ public class AssetsPanel extends JPanel implements AssetModelUpdateListener {
 
     /** Create the list item view for an asset */
     private JPanel createAssetListItem(Asset asset) throws IOException {
-        File path = asset.getPath();
+        System.out.println("Creating list item for asset: " + asset.getPath());
+        File path = new File(asset.getPath());
         JPanel listItem = new JPanel();
+        listItem.setLayout(new BoxLayout(listItem, BoxLayout.X_AXIS));
 
         listItem.setTransferHandler(new TransferHandler() {
             @Override public int getSourceActions(JComponent c) { return COPY; }
 
             @Override
             public Transferable createTransferable(JComponent c) {
-                return new StringSelection(path.toString());
+                return new StringSelection(asset.getId());
             }
 
             @Override
@@ -91,9 +92,18 @@ public class AssetsPanel extends JPanel implements AssetModelUpdateListener {
             }
         });
 
-        BufferedImage img = ImageIO.read(path);
-        listItem.add(new JLabel(new ImageIcon(img.getScaledInstance(32, 32, 0))));
-        listItem.add(new JLabel(path.getName()));
+        if (asset.getType().equals("image")) {
+            BufferedImage img = ImageIO.read(path);
+            JLabel thumbnail = new JLabel(new ImageIcon(img.getScaledInstance(32, 32, 0)));
+            listItem.add(thumbnail);
+        } else if (asset.getType().equals("audio")) {
+            // Create an audio thumbnail
+            JLabel audioLabel = new JLabel("[AUDIO]");
+            listItem.add(audioLabel);
+        }
+
+        JLabel nameLabel = new JLabel(path.getName());
+        listItem.add(nameLabel);
 
         return listItem;
     }
@@ -107,6 +117,7 @@ public class AssetsPanel extends JPanel implements AssetModelUpdateListener {
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         int returnValue = fileChooser.showOpenDialog(null);
         if (returnValue == JFileChooser.APPROVE_OPTION) {
+            // TODO: asset should save maybe in RAM until project is saved.
             File selectedFile = fileChooser.getSelectedFile();
             try {
                 Path assetsDir = Paths.get(project.getDirectory(), ProjectTemplate.getImageDirectory());

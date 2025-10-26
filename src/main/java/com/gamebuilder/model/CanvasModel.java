@@ -3,75 +3,154 @@ package com.gamebuilder.model;
 import java.awt.Color;
 import java.util.ArrayList;
 
+import com.gamebuilder.CanvasTool;
+import com.gamebuilder.Point;
 import com.gamebuilder.canvasobject.CanvasObject;
+import com.gamebuilder.canvasobject.shape.Polygon;
+import com.gamebuilder.canvasobject.sprite.AnimatedSpriteImage;
+import com.gamebuilder.canvasobject.sprite.Sprite;
 
-interface CanvasModelDeleteListener {
-    public void onDelete(CanvasModel model);
-}
 
+/**
+ * Model representing the state of the canvas, including all objects on it,
+ * the selected tool, colors, and offsets.
+ */
 public class CanvasModel {
-    private ArrayList<CanvasObject> shapes = new ArrayList<CanvasObject>();
+    private ArrayList<CanvasObject> objects = new ArrayList<CanvasObject>();
+    private Polygon transformingPolygon = null;
 
-    private ArrayList<CanvasModelDeleteListener> deleteListener = new ArrayList<CanvasModelDeleteListener>();
-    private ArrayList<CanvasModelAddListener> addListener = new ArrayList<CanvasModelAddListener>();
     private ArrayList<CanvasModelUpdateListener> updateListener = new ArrayList<CanvasModelUpdateListener>();
 
     private Color color = Color.RED;
+    private CanvasTool selectedTool = CanvasTool.MOVE_TOOL;
 
-    private String selectedTool = null;
+    private int screenOffsetX = 50;
+    private int screenOffsetY = 50;
+    private int currentOffsetX = 0;
+    private int currentOffsetY = 0;
 
-    public String getSelectedTool() {
-        return this.selectedTool;
+    public Point getScreenOffset() {
+        return new Point(this.screenOffsetX, this.screenOffsetY);
     }
 
-    public void setSelectedTool(String tool) {
-        this.selectedTool = tool;
-        this.notifyUpdate();
+    public Point getOffset() {
+        return new Point(this.currentOffsetX, this.currentOffsetY); 
     }
 
-    public void addObject(CanvasObject object) {
-        this.shapes.add(object);
-
-        for (CanvasModelAddListener listener: this.addListener) {
-            listener.onAdd(object, this);
-        }
+    public void setOffset(Point newOffset) {
+        this.currentOffsetX = (int) newOffset.x;
+        this.currentOffsetY = (int) newOffset.y;
     }
 
-    public void deleteObject(int index) {
-        this.shapes.remove(index);
-
-        for (CanvasModelDeleteListener listener: this.deleteListener) {
-            listener.onDelete(this);
-        }
-    }
-
-    public ArrayList<CanvasObject> getObjects() {
-        return this.shapes;
-    }
-
-    public CanvasObject getObjectAt(int index) {
-        return this.shapes.get(index);
-    }
-
-    public void deselectAll() {
-        for (CanvasObject shape: this.shapes) {
-            shape.setSelected(false);
-        }
-        this.notifyUpdate();
-    }
-
-    public CanvasObject getSelectedObject() {
-        for (CanvasObject shape: this.shapes) {
-            if (shape.isSelected()) {
-                return shape;
+    public CanvasObject getActiveObject() {
+        for (CanvasObject co: this.objects) {
+            if (co.isActive()) {
+                return co;
             }
         }
 
         return null;
     }
 
+    public CanvasTool getSelectedTool() {
+        return this.selectedTool;
+    }
+
+    public ArrayList<Selectable> getSelectableObjects() {
+        ArrayList<Selectable> selectables = new ArrayList<Selectable>();
+        for (CanvasObject obj: this.objects) {
+            if (obj instanceof Selectable) {
+                selectables.add((Selectable) obj);
+            } else if (obj instanceof Sprite) {
+                Sprite sprite = (Sprite) obj;
+                CanvasObject collisionBox = sprite.getAt(sprite.getCurrentState()).getCollisionBox();
+                if (collisionBox != null) {
+                    selectables.add((Selectable) collisionBox);
+                }
+
+                AnimatedSpriteImage image = sprite.getAt(sprite.getCurrentState()).getImage();
+                if (image != null) {
+                    selectables.add(image);
+                }
+            }
+        }
+        return selectables;
+    }
+
+    public boolean isObjectSelected(CanvasObject object) {
+        if (object instanceof Sprite) {
+            Sprite sprite = (Sprite) object;
+            CanvasObject obj = sprite.getAt(sprite.getCurrentState()).getCollisionBox();
+            if (obj != null) {
+                return ((Selectable) obj).getSelected();
+            }
+            AnimatedSpriteImage image = sprite.getAt(sprite.getCurrentState()).getImage();
+            if (image != null) {
+                return image.getSelected();
+            }
+        } else if (object instanceof Selectable) {
+            return ((Selectable) object).getSelected();
+        }
+
+        return false;
+    }
+
+    public void setSelectedTool(CanvasTool tool) {
+        this.selectedTool = tool;
+        this.notifyUpdate("tool_change");
+    }
+
+    public ArrayList<Selectable> getSelectedObjects() {
+        ArrayList<Selectable> selected = new ArrayList<Selectable>();
+        for (Selectable s: this.getSelectableObjects()) {
+            if (s.getSelected()) {
+                selected.add(s);
+            }
+        }
+
+        return selected;
+    }
+
+    public void deselectAll() {
+        for (Selectable s: this.getSelectableObjects()) {
+            s.setSelected(false);
+        }
+        this.notifyUpdate("deselect_all");
+    }
+
+    public void setTransformingPolygon(Polygon poly) {
+        this.transformingPolygon = poly;
+        this.notifyUpdate("transform_polygon");
+    }
+
+    public Polygon getTransformingPolygon() {
+        return this.transformingPolygon;
+    }
+
+    public void addObject(CanvasObject object) {
+        this.objects.add(object);
+
+        this.notifyUpdate("add_object");
+    }
+
+    public void deleteObject(CanvasObject object) {
+        this.objects.remove(object);
+    }
+
+    public void deleteObject(int index) {
+        this.objects.remove(index);
+    }
+
+    public ArrayList<CanvasObject> getObjects() {
+        return this.objects;
+    }
+
+    public CanvasObject getObjectAt(int index) {
+        return this.objects.get(index);
+    }
+
     public int getNumberOfObjects() {
-        return this.shapes.size();
+        return this.objects.size();
     }
 
     public Color getColor() {
@@ -80,24 +159,16 @@ public class CanvasModel {
 
     public void setColor(Color color) {
         this.color = color;
-        this.notifyUpdate();
+        this.notifyUpdate("color_change");
     }
 
-    public void notifyUpdate() {
+    public void notifyUpdate(String update) {
         for (CanvasModelUpdateListener listener: this.updateListener) {
-            listener.onCanvasModelUpdated(this);
+            listener.onCanvasModelUpdated(this, update);
         }
     }
 
     public void addUpdateListener(CanvasModelUpdateListener listener) {
         this.updateListener.add(listener);
-    }
-
-    public void addOnAddListener(CanvasModelAddListener listener) {
-        this.addListener.add(listener);
-    }
-
-    public void addDeleteListener(CanvasModelDeleteListener listener) {
-        this.deleteListener.add(listener);
     }
 }

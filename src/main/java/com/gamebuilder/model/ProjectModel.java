@@ -14,14 +14,38 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.gamebuilder.GameBuilder;
+import com.gamebuilder.scene.Scene;
 
 public class ProjectModel {
   GameBuilder gameBuilder;
   Project project = null;
   ArrayList<ProjectModelUpdateListener> updateListeners = new ArrayList<ProjectModelUpdateListener>();
 
+  ArrayList<Scene> scenes = new ArrayList<>();
+  int currentSceneIndex = -1;
+
   public ProjectModel(GameBuilder gameBuilder) {
     this.gameBuilder = gameBuilder;
+  }
+
+  public ArrayList<Scene> getScenes() {
+    return this.scenes;
+  }
+
+  public int addScene(Scene scene) {
+    this.scenes.add(scene);
+    return this.scenes.size() - 1;
+  }
+
+  public void setCurrentSceneIndex(int index) {
+    this.currentSceneIndex = index;
+  }
+
+  public Scene getCurrentScene() {
+    if (this.currentSceneIndex < 0 || this.currentSceneIndex >= this.scenes.size()) {
+      return null;
+    }
+    return this.scenes.get(this.currentSceneIndex);
   }
 
   /**

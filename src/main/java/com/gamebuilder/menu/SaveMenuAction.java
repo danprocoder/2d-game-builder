@@ -5,20 +5,29 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import javax.swing.JFileChooser;
 
+import com.gamebuilder.model.Asset;
+import com.gamebuilder.model.AssetModel;
 import com.gamebuilder.model.Project;
 import com.gamebuilder.model.ProjectModel;
 import com.gamebuilder.model.ProjectTemplate;
+import com.gamebuilder.model.SceneModel;
+import com.gamebuilder.model.SpriteModel;
+import com.gamebuilder.scene.Scene;
+import com.gamebuilder.service.SceneService;
 
 
 public class SaveMenuAction implements ActionListener {
     ProjectModel projectModel;
+    SceneService sceneService;
 
-    public SaveMenuAction(ProjectModel projectModel) {
+    public SaveMenuAction(ProjectModel projectModel, SceneService sceneService) {
         this.projectModel = projectModel;
+        this.sceneService = sceneService;
     }
 
     @Override()
@@ -33,6 +42,13 @@ public class SaveMenuAction implements ActionListener {
         String directory = project.getDirectory();
         if (directory != null) {
             if (new File(directory).exists()) {
+                try {
+                    this.saveAssetFile(directory);
+                    this.saveObjectFile(directory);
+                    this.saveSceneFile(directory);
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
                 project.setDirty(false);
             } else {
                 // TODO: show unable to save alert
@@ -61,6 +77,55 @@ public class SaveMenuAction implements ActionListener {
                 project.setDirty(false);
             }
         }
+    }
+
+    private void saveObjectFile(String projectDirectory) throws IOException {
+        SpriteModel spriteModel = SpriteModel.getInstance();
+
+        StringBuilder xml = new StringBuilder();
+        xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
+        xml.append("\n<Object>");
+        for (var sprite: spriteModel.getSprites()) {
+            xml.append(sprite.toXml());
+        }
+        xml.append("\n</Object>");
+
+        Path objectFile = Paths.get(projectDirectory, ProjectTemplate.getObjectFile());
+        PrintWriter out = new PrintWriter(objectFile.toFile(), "UTF-8");
+        out.println(xml.toString());
+        out.close();
+    }
+
+    private void saveAssetFile(String projectDirectory) throws IOException {
+        AssetModel assetModel = AssetModel.getInstance();
+
+        StringBuilder xml = new StringBuilder();
+        xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
+        xml.append("\n<Assets>");
+        for (Asset a: assetModel.getAssets()) {
+            xml.append(a.toXml());
+        }
+        xml.append("\n</Assets>");
+
+        Path assetFile = Paths.get(projectDirectory, ProjectTemplate.getAssetFile());
+        PrintWriter out = new PrintWriter(assetFile.toFile(), "UTF-8");
+        out.println(xml.toString());
+        out.close();
+    }
+    
+    private void saveSceneFile(String projectDirectory) throws IOException {
+        StringBuilder xml = new StringBuilder();
+        xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
+        xml.append("\n<Scenes>");
+        for (Scene s: this.sceneService.getScenes()) {
+            xml.append(s.toXml());
+        }
+        xml.append("\n</Scenes>");
+
+        Path sceneFile = Paths.get(projectDirectory, ProjectTemplate.getSceneFile());
+        PrintWriter out = new PrintWriter(sceneFile.toFile(), "UTF-8");
+        out.println(xml.toString());
+        out.close();
     }
 
     private void createFolderStructure(String path) {
