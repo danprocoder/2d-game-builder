@@ -106,7 +106,7 @@ public class RunGameAction implements ActionListener {
             Game2dScene gameScene = new Game2dScene();
             if (s.getBackgroundMusic() != null) {
                 gameScene.setBackgroundAudio(
-                    new Audio(s.getBackgroundMusic().getPath())
+                    new Audio(s.getBackgroundMusic().getFullPath())
                 );
             }
             gameScenes.add(gameScene);

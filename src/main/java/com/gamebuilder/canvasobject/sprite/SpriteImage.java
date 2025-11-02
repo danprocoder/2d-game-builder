@@ -19,7 +19,7 @@ public class SpriteImage {
 
     public SpriteImage(Asset asset) throws IOException {
         this.asset = asset;
-        this.path = asset.getPath();
+        this.path = asset.getFullPath();
         this.image = ImageIO.read(new File(this.path));
         this.width = image.getWidth();
         this.height = image.getHeight();

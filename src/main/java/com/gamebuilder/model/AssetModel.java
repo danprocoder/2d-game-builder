@@ -1,6 +1,7 @@
 package com.gamebuilder.model;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -25,13 +26,18 @@ public class AssetModel {
         return instance;
     }
 
-    /** Parses the asset xml from the asset.xml file. */
-    public void loadFromFile(String filePath) throws Exception {
-        File file = new File(filePath);
+    /**
+     * Parses the asset xml from the asset.xml file.
+     * 
+     * @param projectDir The basepath of the project
+     * @param assetXmlPath The relative path of the asset xml file
+     */
+    public void loadFromFile(String projectDir, String assetXmlPath) throws Exception {
+        File file = new File(assetXmlPath);
         if (!file.exists()) {
-            throw new Exception("Asset file does not exist: " + filePath);
+            throw new Exception("Asset file does not exist: " + assetXmlPath);
         } else if (!file.isFile()) {
-            throw new Exception("Asset path is not a file: " + filePath);
+            throw new Exception("Asset path is not a file: " + assetXmlPath);
         }
 
         DocumentBuilder docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
@@ -44,7 +50,9 @@ public class AssetModel {
                 String id = attributes.getNamedItem("id").getNodeValue();
                 String path = attributes.getNamedItem("path").getNodeValue();
                 String name = attributes.getNamedItem("name").getNodeValue();
-                Asset asset = new Asset(id, path, name);
+
+                String fullPath = Paths.get(projectDir, path).toString();
+                Asset asset = new Asset(id, path, fullPath, name);
                 assets.add(asset);
             }
         }

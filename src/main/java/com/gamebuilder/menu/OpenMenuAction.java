@@ -29,8 +29,8 @@ public class OpenMenuAction implements ActionListener {
         if (returnValue == JFileChooser.APPROVE_OPTION) {
             OpenProjectService service = new OpenProjectService(this.canvasService, this.projectModel, this.sceneService);
 
-            String directory = fileChooser.getSelectedFile().getPath();
-            service.openProject(directory);
+            String projectDir = fileChooser.getSelectedFile().getPath();
+            service.openProject(projectDir);
         }
     }
 }
