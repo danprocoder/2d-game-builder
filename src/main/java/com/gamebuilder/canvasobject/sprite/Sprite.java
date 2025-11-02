@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 import com.gamebuilder.canvasobject.CanvasObject;
+import com.gamebuilder.model.Event;
 import com.gamebuilder.model.Selectable;
 
 public class Sprite extends CanvasObject {
@@ -146,6 +147,14 @@ public class Sprite extends CanvasObject {
 
         for (SpriteState state: this.states) {
             xml.append(state.getXml());
+        }
+
+        if (this.getEvents().size() > 0) {
+            xml.append("\n<Events>");
+            for (Event event: this.getEvents()) {
+                xml.append(event.toXml());
+            }
+            xml.append("\n</Events>");
         }
 
         xml.append("\n</Sprite>");
