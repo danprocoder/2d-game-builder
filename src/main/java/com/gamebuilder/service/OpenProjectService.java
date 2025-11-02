@@ -1,23 +1,20 @@
 package com.gamebuilder.service;
 
 import java.nio.file.Paths;
+import java.util.ArrayList;
 
-import com.gamebuilder.canvasobject.sprite.Sprite;
+import com.gamebuilder.canvasobject.CanvasObject;
 import com.gamebuilder.model.AssetModel;
 import com.gamebuilder.model.ProjectModel;
 import com.gamebuilder.model.ProjectTemplate;
-import com.gamebuilder.model.SpriteModel;
 
 public class OpenProjectService {
     private ProjectModel projectModel;
     private CanvasService canvasService;
     private SceneService sceneService;
 
-    public OpenProjectService(
-        CanvasService canvasService,
-        ProjectModel projectModel,
-        SceneService sceneService
-    ) {
+    public OpenProjectService(CanvasService canvasService,
+            ProjectModel projectModel, SceneService sceneService) {
         this.canvasService = canvasService;
         this.projectModel = projectModel;
         this.sceneService = sceneService;
@@ -37,26 +34,23 @@ public class OpenProjectService {
         }
     }
 
-    private void loadObjects(String directory) throws Exception {
-        SpriteModel spriteModel = SpriteModel.getInstance();
-        spriteModel.loadFromFile(
-            Paths.get(directory, ProjectTemplate.getObjectFile()).toString()
-        );
-        for (Sprite s: spriteModel.getSprites()) {
-            this.canvasService.addNewObject(s);
+    private void loadObjects(String projectDir) throws Exception {
+        ArrayList<CanvasObject> objects = XmlParserService.loadFromFile(
+                Paths.get(projectDir, ProjectTemplate.getObjectFile()).toString());
+
+        for (CanvasObject obj: objects) {
+            this.canvasService.addNewObject(obj);
         }
     }
 
-    private void loadAssets(String directory) throws Exception {
+    private void loadAssets(String projectDir) throws Exception {
         AssetModel assetModel = AssetModel.getInstance();
         assetModel.loadFromFile(
-            Paths.get(directory, ProjectTemplate.getAssetFile()).toString()
-        );
+                projectDir, Paths.get(projectDir, ProjectTemplate.getAssetFile()).toString());
     }
 
-    private void loadScenes(String directory) throws Exception {
+    private void loadScenes(String projectDir) throws Exception {
         this.sceneService.loadScenesFromFile(
-            Paths.get(directory, ProjectTemplate.getSceneFile()).toString()
-        );
+                Paths.get(projectDir, ProjectTemplate.getSceneFile()).toString());
     }
 }
