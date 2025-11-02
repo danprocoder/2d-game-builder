@@ -5,11 +5,8 @@ import java.awt.BorderLayout;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
-import javax.swing.border.Border;
 
-import com.gamebuilder.AssetsPanel;
 import com.gamebuilder.ShapePanel;
-import com.gamebuilder.SpriteManager;
 import com.gamebuilder.model.AssetModel;
 import com.gamebuilder.model.ProjectModel;
 import com.gamebuilder.service.CanvasService;
@@ -43,8 +40,8 @@ public class GameEditorView extends JPanel {
 
     private JSplitPane createLeftPanel() {
         JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.addTab("Shapes", new ShapePanel(this.canvasService));
-        tabbedPane.addTab("Assets", new AssetsPanel(this.projectModel, this.assetModel));
+        tabbedPane.addTab("Shapes", new ShapePanel(this.canvasService, this.sceneService));
+        tabbedPane.addTab("Assets", new AssetsPanelView(this.projectModel, this.assetModel));
 
         JSplitPane leftSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         leftSplitPane.add(tabbedPane);
@@ -57,7 +54,7 @@ public class GameEditorView extends JPanel {
     private JSplitPane createCenterPanel() {
         JSplitPane centerSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         centerSplitPane.setDividerLocation(600); // Negative value positions from the right (200px from right edge)
-        centerSplitPane.add(new CanvasView(this.canvasService));
+        centerSplitPane.add(new CanvasView(this.canvasService, this.sceneService));
         centerSplitPane.add(createRightPanel());
         return centerSplitPane;
     }
@@ -67,12 +64,12 @@ public class GameEditorView extends JPanel {
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 
-        ObjectListView layersPanel = new ObjectListView(this.canvasService);
+        ObjectListView layersPanel = new ObjectListView(this.canvasService, this.sceneService);
         this.canvasService.addUpdateListener(layersPanel);
         splitPane.add(layersPanel);
 
-        SpriteManager spriteManager = new SpriteManager(this.canvasService);
-        splitPane.add(spriteManager);
+        ObjectSettingsView objectSettingsView = new ObjectSettingsView(this.canvasService);
+        splitPane.add(objectSettingsView);
 
         rightTabbedPane.addTab("Objects", splitPane);
         
