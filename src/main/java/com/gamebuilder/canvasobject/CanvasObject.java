@@ -1,6 +1,9 @@
 package com.gamebuilder.canvasobject;
 
 import java.awt.Graphics;
+import java.util.ArrayList;
+
+import com.gamebuilder.model.Event;
 
 public abstract class CanvasObject {
     protected String name;
@@ -9,6 +12,8 @@ public abstract class CanvasObject {
     private boolean isActive = false;
     private int offsetX = 0;
     private int offsetY = 0;
+
+    ArrayList<Event> events = new ArrayList<Event>();
 
     public boolean isActive() {
         return this.isActive;
@@ -24,6 +29,18 @@ public abstract class CanvasObject {
 
     public String getResizeDirection() {
         return this.resizeDirection;
+    }
+
+    public void addEvent(Event event) {
+        this.events.add(event);
+    }
+
+    public ArrayList<Event> getEvents() {
+        return this.events;
+    }
+
+    public void setEvents(ArrayList<Event> events) {
+        this.events = events;
     }
 
     public String getName() {
