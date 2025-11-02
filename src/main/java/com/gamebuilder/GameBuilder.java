@@ -15,7 +15,7 @@ import com.gamebuilder.service.SceneService;
 import com.gamebuilder.util.LogThread;
 import com.gamebuilder.view.CanvasView;
 import com.gamebuilder.view.GameEditorView;
-import com.gamebuilder.view.MenuBarView;
+import com.gamebuilder.view.menubar.MenuBarView;
 
 public class GameBuilder implements ProjectModelUpdateListener {
     CanvasView canvas;
@@ -35,7 +35,7 @@ public class GameBuilder implements ProjectModelUpdateListener {
 
         this.assetModel = AssetModel.getInstance();
 
-        this.projectModel = new ProjectModel(this);
+        this.projectModel = new ProjectModel();
         this.projectModel.addUpdateListener(this);
 
         this.frame = new JFrame("Game Builder");

@@ -1,4 +1,4 @@
-package com.gamebuilder.view;
+package com.gamebuilder.view.menubar;
 
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -15,6 +15,7 @@ import com.gamebuilder.menu.SaveMenuAction;
 import com.gamebuilder.model.ProjectModel;
 import com.gamebuilder.service.CanvasService;
 import com.gamebuilder.service.SceneService;
+import com.gamebuilder.view.events.EventMapView;
 
 public class MenuBarView extends JMenuBar {
     private JFrame frame;
@@ -22,12 +23,8 @@ public class MenuBarView extends JMenuBar {
     private SceneService sceneService;
     private ProjectModel projectModel;
 
-    public MenuBarView(
-        JFrame frame,
-        CanvasService canvasService,
-        SceneService sceneService,
-        ProjectModel projectModel
-    ) {
+    public MenuBarView(JFrame frame, CanvasService canvasService,
+            SceneService sceneService, ProjectModel projectModel) {
         this.frame = frame;
         this.canvasService = canvasService;
         this.sceneService = sceneService;
@@ -51,7 +48,7 @@ public class MenuBarView extends JMenuBar {
 
         JMenuItem saveProject = new JMenuItem("Save");
         saveProject.addActionListener(
-            new SaveMenuAction(this.projectModel, this.sceneService)
+            new SaveMenuAction(this.projectModel, this.canvasService, this.sceneService)
         );
         projectMenu.add(saveProject);
 
@@ -66,7 +63,11 @@ public class MenuBarView extends JMenuBar {
         this.add(editMenu);
 
         JMenu viewMenu = new JMenu("View");
-        viewMenu.add(new JMenuItem("Fabs"));
+        JMenuItem fabs = new JMenuItem("Fabs");
+        fabs.addActionListener(e -> {
+            sceneService.showFabsView();
+        });
+        viewMenu.add(fabs);
 
         JMenu sceneMenu = new JMenu("Scenes");
         JMenuItem newScene = new JMenuItem("New Scene");
@@ -86,7 +87,7 @@ public class MenuBarView extends JMenuBar {
         newEvent.addActionListener(e -> {
             JDialog dialog = new JDialog(this.frame, "Event Mapper", true);
             dialog.setSize(850, 400);
-            dialog.setContentPane(new EventMapView());
+            dialog.setContentPane(new EventMapView(dialog, canvasService, sceneService));
             dialog.setLocationRelativeTo(this.frame);
             dialog.setVisible(true);
         });
