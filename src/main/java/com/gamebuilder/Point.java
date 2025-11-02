@@ -34,4 +34,9 @@ public class Point {
         Point p = (Point) obj;
         return p != null && p.x == this.x && p.y == this.y;
     }
+
+    @Override()
+    public Point clone() {
+        return new Point(this.x, this.y);
+    }
 }
