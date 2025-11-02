@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 
 import com.gamebuilder.Point;
+import com.gamebuilder.model.Event;
 import com.gamebuilder.util.ColorHelper;
 
 public class Rectangle extends Shape {
@@ -111,14 +112,29 @@ public class Rectangle extends Shape {
 
     @Override()
     public String toXml() {
-        return String.format(
-            "\n<Rectangle name=\"%s\" x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" color=\"%s\" />",
-            this.getName(),
-            (int) this.point.x,
-            (int) this.point.y,
-            this.width,
-            this.height,
-            ColorHelper.getHexFromColor(this.color)
+        StringBuilder xml = new StringBuilder();
+        xml.append(
+            String.format(
+                "\n<Rectangle name=\"%s\" x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" color=\"%s\">",
+                this.getName(),
+                (int) this.point.x,
+                (int) this.point.y,
+                this.width,
+                this.height,
+                ColorHelper.getHexFromColor(this.color)
+            )
         );
+
+        if (this.getEvents().size() > 0) {
+            xml.append("\n<Events>");
+            for (Event event: this.getEvents()) {
+                xml.append(event.toXml());
+            }
+            xml.append("\n</Events>");
+        }
+
+        xml.append("\n</Rectangle>");
+
+        return xml.toString();
     }
 }

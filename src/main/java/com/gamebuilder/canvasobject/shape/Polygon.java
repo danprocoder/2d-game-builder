@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 
 import com.gamebuilder.Point;
+import com.gamebuilder.model.Event;
 import com.gamebuilder.util.ColorHelper;
 
 public class Polygon extends Shape {
@@ -267,6 +268,15 @@ public class Polygon extends Shape {
                 )
             );
         }
+
+        if (this.getEvents().size() > 0) {
+            xml.append("\n<Events>");
+            for (Event event: this.getEvents()) {
+                xml.append(event.toXml());
+            }
+            xml.append("\n</Events>");
+        }
+
         xml.append("\n</Polygon>");
         return xml.toString();
     }
