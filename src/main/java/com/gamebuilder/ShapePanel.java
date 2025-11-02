@@ -2,29 +2,29 @@ package com.gamebuilder;
 
 import java.awt.Dimension;
 import java.awt.GridBagLayout;
-import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 
-import javax.imageio.ImageIO;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
-import com.gamebuilder.model.CanvasModel;
+import com.gamebuilder.scene.Scene;
 import com.gamebuilder.service.CanvasService;
+import com.gamebuilder.service.IconService;
+import com.gamebuilder.service.SceneService;
 import com.gamebuilder.util.GridHelper;
 import com.gamebuilder.view.ColorPickerButton;
 
 public class ShapePanel extends JPanel {
     private CanvasService canvasService;
+    private SceneService sceneService;
 
-    public ShapePanel(CanvasService canvasService) {
+    public ShapePanel(CanvasService canvasService, SceneService sceneService) {
         this.canvasService = canvasService;
+        this.sceneService = sceneService;
 
         setPreferredSize(new Dimension(150, 400));
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -32,46 +32,53 @@ public class ShapePanel extends JPanel {
     }
 
     private void addButtons() {
-        CanvasModel canvasModel = canvasService.getModel();
         try {
-            JButton moveTool = new JButton(getIcon("/icons/move.png"));
-            JButton handTool = new JButton(getIcon("/icons/hold.png"));
-            JButton polygonTool = new JButton(getIcon("/icons/polygon.png"));
-            JButton circleTool = new JButton(getIcon("/icons/oval.png"));
-            JButton rectTool = new JButton(getIcon("/icons/square.png"));
+            JButton moveTool = new JButton(IconService.getIcon("/draw tools/move.png"));
+            JButton handTool = new JButton(IconService.getIcon("/draw tools/hold.png"));
+            JButton polygonTool = new JButton(IconService.getIcon("/draw tools/polygon.png"));
+            JButton circleTool = new JButton(IconService.getIcon("/draw tools/oval.png"));
+            JButton rectTool = new JButton(IconService.getIcon("/draw tools/square.png"));
+            JButton textTool = new JButton(IconService.getIcon("/draw tools/text.png"));
 
             moveTool.addActionListener(new ActionListener() {
                 @Override()
                 public void actionPerformed(ActionEvent e) {
-                    canvasModel.setSelectedTool(CanvasTool.MOVE_TOOL);
+                    getService().setSelectedTool(CanvasTool.MOVE_TOOL);
                 }
             });
 
             handTool.addActionListener(new ActionListener() {
                 @Override()
                 public void actionPerformed(ActionEvent e) {
-                    canvasModel.setSelectedTool(CanvasTool.HAND_TOOL);
+                    getService().setSelectedTool(CanvasTool.HAND_TOOL);
                 }
             });
 
             polygonTool.addActionListener(new ActionListener() {
                 @Override()
                 public void actionPerformed(ActionEvent e) {
-                    canvasModel.setSelectedTool(CanvasTool.POLYGON_TOOL);
+                    getService().setSelectedTool(CanvasTool.POLYGON_TOOL);
                 }
             });
 
             circleTool.addActionListener(new ActionListener() {
                 @Override()
                 public void actionPerformed(ActionEvent e) {
-                    canvasModel.setSelectedTool(CanvasTool.CIRCLE_TOOL);
+                    getService().setSelectedTool(CanvasTool.CIRCLE_TOOL);
                 }
             });
 
             rectTool.addActionListener(new ActionListener() {
                 @Override()
                 public void actionPerformed(ActionEvent e) {
-                    canvasModel.setSelectedTool(CanvasTool.RECT_TOOL);
+                    getService().setSelectedTool(CanvasTool.RECT_TOOL);
+                }
+            });
+
+            textTool.addActionListener(new ActionListener() {
+                @Override()
+                public void actionPerformed(ActionEvent e) {
+                    getService().setSelectedTool(CanvasTool.TEXT_TOOL);
                 }
             });
             
@@ -83,6 +90,7 @@ public class ShapePanel extends JPanel {
             grid.add(polygonTool, GridHelper.getConstraints(0, 1));
             grid.add(circleTool, GridHelper.getConstraints(1, 1));
             grid.add(rectTool, GridHelper.getConstraints(0, 2));
+            grid.add(textTool, GridHelper.getConstraints(1, 2));
 
             Dimension pref = grid.getPreferredSize();
             grid.setMaximumSize(new Dimension(pref.width, pref.height));
@@ -90,8 +98,8 @@ public class ShapePanel extends JPanel {
 
             add(Box.createVerticalStrut(30));
 
-            ColorPickerButton colorPickerBtn = new ColorPickerButton(canvasModel.getColor(), c -> {
-                canvasModel.setColor(c);
+            ColorPickerButton colorPickerBtn = new ColorPickerButton(getService().getSelectedBgColor(), c -> {
+                getService().setSelectedBgColor(c);
             });
             add(colorPickerBtn);
         } catch (IOException e) {
@@ -99,9 +107,12 @@ public class ShapePanel extends JPanel {
         }
     }
 
-    private ImageIcon getIcon(String path) throws IOException {
-        BufferedImage img = ImageIO.read(getClass().getResourceAsStream(path));
-        Image scaledImg = img.getScaledInstance(24, 24,  java.awt.Image.SCALE_SMOOTH);
-        return new ImageIcon(scaledImg);
+    // TODO: refactor to avoid code duplication with other views
+    private CanvasService getService() {
+        Scene scene = this.sceneService.getActiveScene();
+        if (scene != null) {
+            return scene.getCanvasService();
+        }
+        return this.canvasService;
     }
 }
