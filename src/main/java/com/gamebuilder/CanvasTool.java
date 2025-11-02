@@ -5,5 +5,6 @@ public enum CanvasTool {
     HAND_TOOL,
     POLYGON_TOOL,
     CIRCLE_TOOL,
-    RECT_TOOL
+    RECT_TOOL,
+    TEXT_TOOL
 }
