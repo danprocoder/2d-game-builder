@@ -2,6 +2,7 @@ package com.gamebuilder.util;
 
 import java.io.Closeable;
 import java.io.PrintWriter;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.io.File;
 import java.util.Date;
@@ -24,8 +25,8 @@ public class LogThread implements Runnable, Closeable {
 
     public LogThread() {
         try {
-            String timestamp = new SimpleDateFormat("dd-MM-yyyy'_'HH:mm:ss").format(new Date());
-            File logFile = new File(String.format("logs/log_%s.log", timestamp));
+            String timestamp = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss").format(new Date());
+            File logFile = Paths.get("logs", String.format("log_%s.log", timestamp)).toFile();
 
             logFile.getParentFile().mkdirs();
 
@@ -48,6 +49,10 @@ public class LogThread implements Runnable, Closeable {
 
     @Override
     public void run() {
+        if (this.printWriter == null) {
+            return;
+        }
+
         this.running = true;
 
         while (running) {
