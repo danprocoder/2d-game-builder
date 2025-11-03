@@ -3,6 +3,7 @@ package com.gamebuilder.canvasobject;
 import java.awt.Graphics;
 import java.util.ArrayList;
 
+import com.gamebuilder.Point;
 import com.gamebuilder.model.Event;
 
 public abstract class CanvasObject {
@@ -76,6 +77,8 @@ public abstract class CanvasObject {
     public abstract int getWidth();
 
     public abstract int getHeight();
+
+    public abstract Point getPosition();
 
     public abstract String toXml();
 }

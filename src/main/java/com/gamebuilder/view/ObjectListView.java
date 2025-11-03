@@ -3,11 +3,9 @@ package com.gamebuilder.view;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Font;
 import java.awt.LayoutManager;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
@@ -29,20 +27,17 @@ import javax.swing.KeyStroke;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
-import javax.xml.crypto.Data;
 
 import com.gamebuilder.model.CanvasModel;
 import com.gamebuilder.CanvasTool;
 import com.gamebuilder.canvasobject.CanvasObject;
 import com.gamebuilder.model.CanvasModelUpdateListener;
+import com.gamebuilder.model.SceneUpdateListener;
+import com.gamebuilder.scene.Scene;
 import com.gamebuilder.service.CanvasService;
+import com.gamebuilder.service.SceneService;
 import com.gamebuilder.util.Log;
 
-class CanvasObjectDataFlavor extends DataFlavor {
-    public CanvasObjectDataFlavor() {
-        super(CanvasObject.class, "CanvasObject");
-    }
-}
 
 class ListItem {
     CanvasObject object;
@@ -53,23 +48,20 @@ class ListItem {
     }
 }
 
-public class ObjectListView extends JPanel implements CanvasModelUpdateListener {
+public class ObjectListView extends JPanel implements CanvasModelUpdateListener, SceneUpdateListener {
     private DefaultListModel<ListItem> listModel = new DefaultListModel<>();
     private JList<ListItem> list = new JList<>(listModel);
     private CanvasService canvasService;
-    private ObjectListView.ListTransferHandler transferHandler = new ObjectListView.ListTransferHandler();
+    private SceneService sceneService;
 
-    public ObjectListView(CanvasService service) {
+    public ObjectListView(CanvasService service, SceneService sceneService) {
         this.canvasService = service;
-        this.canvasService.addUpdateListener(this);
+        this.sceneService = sceneService;
+        this.sceneService.addUpdateListener(this);
+        this.setupCanvasUpdateListeners();
 
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setAlignmentX(LEFT_ALIGNMENT);
-
-        // JLabel title = new JLabel("Objects");
-        // Font titleFont = title.getFont();
-        // title.setFont(titleFont.deriveFont(titleFont.getStyle() | Font.BOLD));
-        // add(title);
 
         list.setAlignmentX(LEFT_ALIGNMENT);
         list.setCellRenderer(new LayerCellRenderer());
@@ -80,7 +72,7 @@ public class ObjectListView extends JPanel implements CanvasModelUpdateListener 
                 onClick((JList<ListItem>) e.getSource());
             }
         });
-        this.list.setTransferHandler(this.transferHandler);
+        this.list.setTransferHandler(new ObjectListView.ListTransferHandler());
         list.addMouseListener(new MouseAdapter() {
             @Override()
             public void mouseClicked(MouseEvent e) {
@@ -102,7 +94,7 @@ public class ObjectListView extends JPanel implements CanvasModelUpdateListener 
 
             @Override()
             public void mousePressed(MouseEvent event) {
-                CanvasService service = ObjectListView.this.canvasService;
+                CanvasService service = ObjectListView.this.getService();
 
                 if (event.isPopupTrigger()) {
                     int index = list.locationToIndex(event.getPoint());
@@ -129,22 +121,20 @@ public class ObjectListView extends JPanel implements CanvasModelUpdateListener 
         this.add(new JScrollPane(this.list));
     }
 
-    private void onClick(JList<ListItem> source) {
-        ListItem selectedItem = source.getSelectedValue();
-        if (selectedItem != null && !selectedItem.renameMode) {
-            this.canvasService.setActive(selectedItem.object);
-            this.canvasService.selectObject(selectedItem.object, false);
-            this.canvasService.setSelectedTool(CanvasTool.MOVE_TOOL);
-        }
-    }
+    @Override()
+    public void onSceneUpdate() {
+        Log.d("ObjectListView.onSceneUpdate()", "Scene updated, refreshing objects");
 
-    private void refreshObjects() {
-        this.listModel.clear();
+        // When the scene changes, we need to listen to the canvas model for
+        // the new scene so we can display the objects in the new scene
 
-        ArrayList<CanvasObject> objs = this.canvasService.getObjects();
-        for (int i = objs.size() - 1; i >= 0; i--) {
-            this.listModel.addElement(new ListItem(objs.get(i)));
-        }
+        this.setupCanvasUpdateListeners();
+
+        SwingUtilities.invokeLater(() -> {
+            this.refreshObjects();
+            this.revalidate(); // triggers layout pass
+            this.repaint();    // paints new child
+        });
     }
 
     @Override()
@@ -159,6 +149,44 @@ public class ObjectListView extends JPanel implements CanvasModelUpdateListener 
             this.revalidate(); // triggers layout pass
             this.repaint();    // paints new child
         });
+    }
+
+    private void setupCanvasUpdateListeners() {
+        // TODO: refactor so that it's more readable and maintainable
+        this.canvasService.removeUpdateListener(this);
+        for (Scene scene : this.sceneService.getScenes()) {
+            scene.getCanvasService().removeUpdateListener(this);
+        }
+        Log.v("ObjectListView.setupUpdateListeners()", "Adding update listener to canvas service");
+        this.getService().addUpdateListener(this);
+    }
+
+    // TODO: refactor to avoid code duplication with other views
+    private CanvasService getService() {
+        Scene scene = this.sceneService.getActiveScene();
+        if (scene != null) {
+            return scene.getCanvasService();
+        }
+        return this.canvasService;
+    }
+
+    private void onClick(JList<ListItem> source) {
+        ListItem selectedItem = source.getSelectedValue();
+        if (selectedItem != null && !selectedItem.renameMode) {
+            this.getService().setActive(selectedItem.object);
+            this.getService().selectObject(selectedItem.object, false);
+            this.getService().setSelectedTool(CanvasTool.MOVE_TOOL);
+        }
+    }
+
+    private void refreshObjects() {
+        this.listModel.clear();
+
+        ArrayList<CanvasObject> objs = this.getService().getObjects();
+        Log.d("ObjectListView.refreshObjects()", "Refreshing object list with " + objs.size() + " objects");
+        for (int i = objs.size() - 1; i >= 0; i--) {
+            this.listModel.addElement(new ListItem(objs.get(i)));
+        }
     }
 
     /**
@@ -267,7 +295,7 @@ public class ObjectListView extends JPanel implements CanvasModelUpdateListener 
                 int draggedIndex = Integer.parseInt((String) support.getTransferable().getTransferData(DataFlavor.stringFlavor));
 
                 JList.DropLocation dropLocation = (JList.DropLocation) support.getDropLocation();
-                int size = canvasService.getObjects().size();
+                int size = getService().getObjects().size();
                 int d = dropLocation.getIndex();
 
                 Log.d("ObjectListView.importData()", "Original canvas_from=" + draggedIndex + " list_to=" + d);
@@ -281,7 +309,7 @@ public class ObjectListView extends JPanel implements CanvasModelUpdateListener 
                 }
 
                 if (draggedIndex != dropIndex) {
-                    canvasService.moveObjectToPosition(draggedIndex, dropIndex);
+                    getService().moveObjectToPosition(draggedIndex, dropIndex);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -316,7 +344,7 @@ public class ObjectListView extends JPanel implements CanvasModelUpdateListener 
 
             public ObjectTransferable(CanvasObject object) {
                 Log.v("new ObjectTransferable()", "Creating transferable for object: " + object.getName());
-                this.index = canvasService.getObjects().indexOf(object);
+                this.index = getService().getObjects().indexOf(object);
             }
 
             @Override

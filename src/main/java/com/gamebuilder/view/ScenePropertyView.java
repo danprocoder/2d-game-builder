@@ -1,18 +1,15 @@
 package com.gamebuilder.view;
 
-import java.awt.datatransfer.DataFlavor;
-
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.TransferHandler;
 
 import com.gamebuilder.model.Asset;
-import com.gamebuilder.model.AssetModel;
 import com.gamebuilder.model.SceneUpdateListener;
 import com.gamebuilder.scene.Scene;
 import com.gamebuilder.service.SceneService;
+import com.gamebuilder.view.dnd.SoundAssetFlavor;
 
 public class ScenePropertyView extends JPanel implements SceneUpdateListener {
     private SceneService sceneService;
@@ -35,7 +32,7 @@ public class ScenePropertyView extends JPanel implements SceneUpdateListener {
     }
 
     private void createUI() {
-        Scene scene = this.sceneService.getCurrentScene();
+        Scene scene = this.sceneService.getActiveScene();
         if (scene == null) {
             this.add(new JLabel("No scene selected"));
             return;
@@ -59,18 +56,17 @@ public class ScenePropertyView extends JPanel implements SceneUpdateListener {
         }
 
         panel.setTransferHandler(new TransferHandler() {
+            SoundAssetFlavor flavor = new SoundAssetFlavor();
+
             @Override()
             public boolean canImport(TransferSupport support) {
-                // TODO: can only import audio assets
-                return true;
+                return support.isDataFlavorSupported(flavor);
             }
 
             @Override()
             public boolean importData(TransferSupport support) {
                 try {
-                    String assetId = (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);
-
-                    Asset asset = AssetModel.getInstance().getById(assetId);
+                    Asset asset = (Asset) support.getTransferable().getTransferData(this.flavor);
                     if (asset != null) {
                         scene.setBackgroundMusic(asset);
                         ScenePropertyView.this.sceneService.notifyChange();

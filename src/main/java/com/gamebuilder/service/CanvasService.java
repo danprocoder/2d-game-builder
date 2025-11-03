@@ -1,5 +1,6 @@
 package com.gamebuilder.service;
 
+import java.awt.Color;
 import java.util.ArrayList;
 
 import com.gamebuilder.CanvasTool;
@@ -7,6 +8,7 @@ import com.gamebuilder.Point;
 import com.gamebuilder.canvasobject.CanvasObject;
 import com.gamebuilder.canvasobject.shape.BoundingRect;
 import com.gamebuilder.canvasobject.shape.Polygon;
+import com.gamebuilder.canvasobject.shape.Text;
 import com.gamebuilder.canvasobject.sprite.Sprite;
 import com.gamebuilder.canvasobject.sprite.SpriteState;
 import com.gamebuilder.model.CanvasModel;
@@ -18,6 +20,7 @@ import com.gamebuilder.util.Log;
 public class CanvasService {
     private CanvasModel model;
     private CanvasObject lastItem;
+    private ArrayList<CanvasModelUpdateListener> updateListeners = new ArrayList<CanvasModelUpdateListener>();
 
     public CanvasService(CanvasModel model) {
         this.model = model;
@@ -27,9 +30,30 @@ public class CanvasService {
         return this.model;
     }
 
+    public int getNumberOfObjects() {
+        return this.model.getObjects().size();
+    }
+
     public void setSelectedTool(CanvasTool tool) {
         this.model.setSelectedTool(tool);
         this.notifyUpdate("select_tool");
+    }
+
+    public CanvasTool getSelectedTool() {
+        return this.model.getSelectedTool();
+    }
+
+    public Color getSelectedBgColor() {
+        return this.model.getColor();
+    }
+
+    public void setSelectedBgColor(Color color) {
+        this.model.setColor(color);
+        this.notifyUpdate("set_bg_color");
+    }
+
+    public ArrayList<Selectable> getSelectableObjects() {
+        return this.model.getSelectableObjects();
     }
 
     public void addNewObject(CanvasObject shape) {
@@ -77,9 +101,27 @@ public class CanvasService {
         return this.model.getActiveObject();
     }
 
+    public void unfocusAllTextInputs() {
+        for (CanvasObject c: this.getObjects()) {
+            if (c instanceof Text) ((Text) c).setFocus(false);
+        }
+    }
+
     public void resizeObjectBy(CanvasObject object, int dx, int dy) {
         object.setSize(object.getWidth() + dx, object.getHeight() + dy);
         this.notifyUpdate("resize_object_by");
+    }
+
+    public CanvasObject getClickedObject(int mx, int my) {
+        ArrayList<CanvasObject> objects = this.model.getObjects();
+        for (int i = objects.size() - 1; i >= 0; i--) {
+            CanvasObject obj = objects.get(i);
+            if (obj instanceof Selectable) {
+                if (((Selectable) obj).mouseHit(mx, my)) return obj;
+            }
+        }
+
+        return null;
     }
 
     public Selectable findAndSelectShape(int x, int y, boolean addToSelection) {
@@ -87,13 +129,13 @@ public class CanvasService {
             this.model.deselectAll();
         }
 
-        ArrayList<Selectable> selectable = this.model.getSelectableObjects();
-        for (Selectable s: selectable) {
-            if (s.mouseHit(x, y)) {
-                s.setSelected(true);
-                return s;
-            }
+        Selectable object = (Selectable) this.getClickedObject(x, y);
+        if (object != null) {
+            object.setSelected(true);
+            this.notifyUpdate("shape_selected");
+            return object;
         }
+
         return null;
     }
 
@@ -135,12 +177,15 @@ public class CanvasService {
                 Point a = points.get(i);
                 Point b = points.get(i + 1 == points.size() ? 0 : i + 1);
 
-                System.out.println("Distance: c: ca + bc " + (mp.distanceFrom(a) + b.distanceFrom(mp)) + ", ba: " + b.distanceFrom(a));
+                Log.d("CanvasService.isOnPolygonLine()",
+                        "Distance: c: ca + bc " + (mp.distanceFrom(a) + b.distanceFrom(mp))
+                        + ", ba: " + b.distanceFrom(a));
                 float sumMouseToPoints = mp.distanceFrom(a) + b.distanceFrom(mp);
                 float distBetweenPoints = b.distanceFrom(a);
 
                 if (sumMouseToPoints - distBetweenPoints < 0.5f) {
-                    System.out.println("Mouse is on line between " + a + " and " + b);
+                    Log.d("CanvasService.isOnPolygonLine()",
+                            "Mouse is on line between " + a + " and " + b);
                     return new Point[] {a, b};
                 }
             }
@@ -276,10 +321,16 @@ public class CanvasService {
     }
 
     public void addUpdateListener(CanvasModelUpdateListener listener) {
-        this.model.addUpdateListener(listener);
+        this.updateListeners.add(listener);
     }
 
+    public void removeUpdateListener(CanvasModelUpdateListener listener) {
+        this.updateListeners.remove(listener);
+    }
+    
     public void notifyUpdate(String update) {
-        this.model.notifyUpdate(update);
+        for (CanvasModelUpdateListener listener: this.updateListeners) {
+            listener.onCanvasModelUpdated(this.model, update);
+        }
     }
 }

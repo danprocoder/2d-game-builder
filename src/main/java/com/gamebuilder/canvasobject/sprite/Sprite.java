@@ -4,6 +4,7 @@ import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.UUID;
 
+import com.gamebuilder.Point;
 import com.gamebuilder.canvasobject.CanvasObject;
 import com.gamebuilder.model.Event;
 import com.gamebuilder.model.Selectable;
@@ -13,6 +14,7 @@ public class Sprite extends CanvasObject {
     private String name;
     private ArrayList<SpriteState> states = new ArrayList<SpriteState>();
     private String currentState = null;
+    private Point position = new Point(0, 0);
 
     public Sprite(String name) {
         this.id = UUID.randomUUID().toString();
@@ -78,6 +80,15 @@ public class Sprite extends CanvasObject {
         }
     }
 
+    public void translate(int dx, int dy) {
+        this.position = new Point(this.position.getXInt() + dx, this.position.getYInt() + dy);
+    }
+
+    @Override()
+    public Point getPosition() {
+        return this.position;
+    }
+
     @Override()
     public void adjustOffset(int dx, int dy) {
         super.adjustOffset(dx, dy);
@@ -132,11 +143,13 @@ public class Sprite extends CanvasObject {
 
     @Override()
     public int getWidth() {
+        // This should be the size of the current state
         return 100;
     }
 
     @Override()
     public int getHeight() {
+        // This should be the size of the current state
         return 100;
     }
 

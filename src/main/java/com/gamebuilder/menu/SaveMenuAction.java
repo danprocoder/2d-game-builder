@@ -15,18 +15,20 @@ import com.gamebuilder.model.AssetModel;
 import com.gamebuilder.model.Project;
 import com.gamebuilder.model.ProjectModel;
 import com.gamebuilder.model.ProjectTemplate;
-import com.gamebuilder.model.SceneModel;
 import com.gamebuilder.model.SpriteModel;
 import com.gamebuilder.scene.Scene;
+import com.gamebuilder.service.CanvasService;
 import com.gamebuilder.service.SceneService;
 
 
 public class SaveMenuAction implements ActionListener {
     ProjectModel projectModel;
+    CanvasService canvasService;
     SceneService sceneService;
 
-    public SaveMenuAction(ProjectModel projectModel, SceneService sceneService) {
+    public SaveMenuAction(ProjectModel projectModel, CanvasService canvasService, SceneService sceneService) {
         this.projectModel = projectModel;
+        this.canvasService = canvasService;
         this.sceneService = sceneService;
     }
 
@@ -85,9 +87,15 @@ public class SaveMenuAction implements ActionListener {
         StringBuilder xml = new StringBuilder();
         xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
         xml.append("\n<Object>");
+
+        for (var object: canvasService.getObjects()) {
+            xml.append(object.toXml());
+        }
+
         for (var sprite: spriteModel.getSprites()) {
             xml.append(sprite.toXml());
         }
+
         xml.append("\n</Object>");
 
         Path objectFile = Paths.get(projectDirectory, ProjectTemplate.getObjectFile());

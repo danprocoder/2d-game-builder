@@ -68,7 +68,7 @@ public class GameEditorView extends JPanel {
         this.canvasService.addUpdateListener(layersPanel);
         splitPane.add(layersPanel);
 
-        ObjectSettingsView objectSettingsView = new ObjectSettingsView(this.canvasService);
+        ObjectSettingsView objectSettingsView = new ObjectSettingsView(this.canvasService, this.sceneService);
         splitPane.add(objectSettingsView);
 
         rightTabbedPane.addTab("Objects", splitPane);

@@ -2,12 +2,17 @@ package com.gamebuilder.view;
 
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -23,21 +28,27 @@ import com.gamebuilder.canvasobject.shape.Polygon;
 import com.gamebuilder.canvasobject.shape.BoundingRect;
 import com.gamebuilder.canvasobject.shape.Circle;
 import com.gamebuilder.canvasobject.shape.Rectangle;
+import com.gamebuilder.canvasobject.shape.Text;
 import com.gamebuilder.model.CanvasModel;
 import com.gamebuilder.model.CanvasModelUpdateListener;
+import com.gamebuilder.model.SceneUpdateListener;
 import com.gamebuilder.model.Selectable;
 import com.gamebuilder.model.Selection;
 import com.gamebuilder.model.SpriteModel;
 import com.gamebuilder.model.SpriteModelUpdateListener;
+import com.gamebuilder.scene.Scene;
 import com.gamebuilder.service.CanvasService;
+import com.gamebuilder.service.IconService;
+import com.gamebuilder.service.SceneService;
+import com.gamebuilder.util.Log;
 
 public class CanvasView extends JPanel
-        implements MouseListener, MouseMotionListener, CanvasModelUpdateListener,
-            SpriteModelUpdateListener {
+        implements MouseListener, MouseMotionListener, KeyListener, CanvasModelUpdateListener,
+            SpriteModelUpdateListener, SceneUpdateListener, FocusListener {
 
-    private CanvasModel model;
     private SpriteModel spriteModel = SpriteModel.getInstance();
     private CanvasService service;
+    private SceneService sceneService;
 
     private int currentMouseX;
     private int currentMouseY;
@@ -59,14 +70,16 @@ public class CanvasView extends JPanel
 
     private boolean dPressed = false;
 
-    public CanvasView(CanvasService service) {
+    public CanvasView(CanvasService service, SceneService sceneService) {
         this.service = service;
-        this.model = service.getModel();
+        this.sceneService = sceneService;
+        this.sceneService.addUpdateListener(this);
         this.service.addUpdateListener(this);
         this.spriteModel.addUpdateListener(this);
 
         addMouseListener(this);
         addMouseMotionListener(this);
+        addKeyListener(this);
 
         this.setUpShortcutKeys();
         
@@ -80,6 +93,10 @@ public class CanvasView extends JPanel
 
     @Override()
     public void onCanvasModelUpdated(CanvasModel model, String update) {
+        if (update.equals("select_tool")) {
+            this.getService().unfocusAllTextInputs();
+            this.drawing = false;
+        }
         this.repaint();
     }
 
@@ -89,12 +106,27 @@ public class CanvasView extends JPanel
     }
 
     @Override()
+    public void onSceneUpdate() {
+        this.repaint();
+    }
+
+    @Override()
+    public void focusLost(FocusEvent event) {
+        this.getService().unfocusAllTextInputs();
+    }
+
+    @Override()
+    public void focusGained(FocusEvent event) {}
+
+    @Override()
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
+        CanvasService service = this.getService();
+
         drawBackground(g);
 
-        CanvasTool tool = this.model.getSelectedTool();
+        CanvasTool tool = service.getSelectedTool();
         if (tool != null) {
             g.setColor(Color.BLACK);
             g.drawString("Selected Tool: " + tool, 20, 20);
@@ -105,13 +137,13 @@ public class CanvasView extends JPanel
             }
         }
 
-        for (CanvasObject object: this.model.getObjects()) {
+        for (CanvasObject object: service.getObjects()) {
             object.draw(g);
         }
 
         // Show line represent the polygon path as it's being drawn.
         if (tool == CanvasTool.POLYGON_TOOL && this.drawing) {
-            ArrayList<Point> pts = ((Polygon) this.service.getLastAddedObject()).getPoints();
+            ArrayList<Point> pts = ((Polygon) service.getLastAddedObject()).getPoints();
 
             // Line from the last point to the current mouse position
             // Draw the line before because we want the circles to overlap it.
@@ -146,48 +178,52 @@ public class CanvasView extends JPanel
         // Draw rect to indicate the current screen resolution
         g.setColor(Color.BLACK);
         g.drawRect(service.getScreenX(), service.getScreenY(), this.width, this.height);
+
+        //TODO: drawGrid()
     }
 
     @Override()
     public void mousePressed(MouseEvent event) {
-        // requestFocusInWindow();
+        Log.d("CanvasView.mousePressed()", "Mouse pressed at (" + event.getX() + ", " + event.getY() + ")");
+        CanvasService service = this.getService();
 
         int mx = event.getX();
         int my = event.getY();
         this.lastMouseDragX = mx;
         this.lastMouseDragY = my;
-        CanvasTool tool = this.model.getSelectedTool();
+        CanvasTool tool = service.getSelectedTool();
 
         if (tool == CanvasTool.RECT_TOOL && !this.drawing) {
+            Log.d("CanvasView.mousePressed()", "Starting new rectangle at (" + mx + ", " + my + ")");
             Rectangle object = new Rectangle(
                 new Point(mx, my),
                 1,
                 1,
-                this.model.getColor(),
-                "Rectangle " + (this.model.getNumberOfObjects() + 1)
+                service.getSelectedBgColor(),
+                "Rectangle " + (service.getNumberOfObjects() + 1)
             );
-            this.service.addNewObject(object);
+            service.addNewObject(object);
             this.drawing = true;
         } else if (tool == CanvasTool.CIRCLE_TOOL && !this.drawing) {
             Circle object = new Circle(
                 new Point(mx, my),
                 1,
                 1,
-                this.model.getColor(),
-                "Circle " + (this.model.getNumberOfObjects() + 1)
+                service.getSelectedBgColor(),
+                "Circle " + (service.getNumberOfObjects() + 1)
             );
-            this.service.addNewObject(object);
+            service.addNewObject(object);
             this.drawing = true;
         } else if (tool == CanvasTool.POLYGON_TOOL && !this.drawing) {
             Polygon object = new Polygon(
                 new Point(mx, my),
-                this.model.getColor(),
-                "Polygon " + (this.model.getNumberOfObjects() + 1)
+                service.getSelectedBgColor(),
+                "Polygon " + (service.getNumberOfObjects() + 1)
             );
-            this.service.addNewObject(object);
+            service.addNewObject(object);
             this.drawing = true;
         } else if (tool == CanvasTool.POLYGON_TOOL && this.drawing) {
-            Polygon p = (Polygon) this.service.getLastAddedObject();
+            Polygon p = (Polygon) service.getLastAddedObject();
 
             Point nextPoint = new Point(mx, my);
 
@@ -198,23 +234,45 @@ public class CanvasView extends JPanel
             } else {
                 p.addPoint(nextPoint);
             }
-            this.service.notifyUpdate("add_point_to_polygon");
+            service.notifyUpdate("add_point_to_polygon");
+        } else if (tool == CanvasTool.TEXT_TOOL) {
+            Text text;
+            CanvasObject clicked = service.getClickedObject(mx, my);
+            if (clicked == null || !(clicked instanceof Text)) {
+                service.unfocusAllTextInputs();
+                
+                text = new Text("Text " + (service.getNumberOfObjects() + 1), new Point(mx, my - 6));
+                service.addNewObject(text);
+                this.drawing = true;
+                this.requestFocus();
+            } else if (clicked instanceof Text) {
+                service.unfocusAllTextInputs();
+
+                text = (Text) clicked;
+                text.setFocus(true);
+                text.onClick(new Point(mx, my));
+                this.requestFocus();
+                this.drawing = true;
+            }
         } else if (tool == CanvasTool.MOVE_TOOL) {
-            this.selection = this.service.getSelection();
+            this.selection = service.getSelection();
+
+            service.unfocusAllTextInputs();
+            this.drawing = false;
 
             boolean clickInsideBox = selection.getBoundingRect().hit(mx, my);
             this.resizeDirection = selection.getResizeDirection(mx, my);
-            this.transformPointIndex = this.service.getClickedTransformPointIndex(mx, my);
+            this.transformPointIndex = service.getClickedTransformPointIndex(mx, my);
 
             if (this.transformPointIndex != -1) {
                 if (this.dPressed) {
-                    this.service.removePointFromPolygon(this.transformPointIndex);
+                    service.removePointFromPolygon(this.transformPointIndex);
                     this.transformPointIndex = -1;
                 } else {
                     this.selectAction = "transform_polygon";
                 }
             } else if (this.polyEdgeMouseIsTouching != null) {
-                this.service.addPointToPolygon(
+                service.addPointToPolygon(
                     this.polyEdgeMouseIsTouching[0],
                     this.polyEdgeMouseIsTouching[1],
                     new Point(mx, my)
@@ -224,7 +282,7 @@ public class CanvasView extends JPanel
             } else if (clickInsideBox) {
                 this.selectAction = "move";
 
-                Selectable selected = this.service.findAndSelectShape(mx, my, false);
+                Selectable selected = service.findAndSelectShape(mx, my, false);
                 if (selected != null && selected instanceof Polygon) {
                     Polygon poly = (Polygon) selected;
                     service.handleClickOnPolygon(poly);
@@ -234,7 +292,7 @@ public class CanvasView extends JPanel
                 }
             } else {
                 this.selectAction = "move";
-                this.service.findAndSelectShape(mx, my, false);
+                service.findAndSelectShape(mx, my, false);
             }
         }
 
@@ -243,11 +301,13 @@ public class CanvasView extends JPanel
 
     @Override()
     public void mouseDragged(MouseEvent event) {
+        CanvasService service = this.getService();
+
         int mx = event.getX();
         int my = event.getY();
         this.currentMouseX = mx;
         this.currentMouseY = my;
-        CanvasTool tool = this.model.getSelectedTool();
+        CanvasTool tool = service.getSelectedTool();
 
         int dx = mx - this.lastMouseDragX;
         int dy = my - this.lastMouseDragY;
@@ -261,13 +321,13 @@ public class CanvasView extends JPanel
             } else if (this.selectAction == "resize" && this.resizeDirection != null) {
                 this.selection.increaseSizeBy(this.resizeDirection, dx, dy);
             } else if (this.selectAction == "transform_polygon") {
-                Polygon poly = this.model.getTransformingPolygon();
+                Polygon poly = service.getTransformingPolygon();
                 if (poly != null && poly.getTransform()) {
                     poly.moveTransformPoint(this.transformPointIndex, dx, dy);
                 }
             }
         } else if (tool == CanvasTool.HAND_TOOL) {
-            this.service.adjustOffset(dx, dy);
+            service.adjustOffset(dx, dy);
         }
 
         this.lastMouseDragX = mx;
@@ -278,7 +338,8 @@ public class CanvasView extends JPanel
 
     @Override()
     public void mouseReleased(MouseEvent event) {
-        CanvasTool tool = this.model.getSelectedTool();
+        CanvasService service = this.getService();
+        CanvasTool tool = service.getSelectedTool();
         if (this.drawing
                 && (tool == CanvasTool.RECT_TOOL || tool == CanvasTool.CIRCLE_TOOL)) {
             this.drawing = false;
@@ -288,11 +349,13 @@ public class CanvasView extends JPanel
 
     @Override()
     public void mouseMoved(MouseEvent event) {
+        CanvasService service = this.getService();
+
         this.currentMouseX = event.getX();
         this.currentMouseY = event.getY();
 
-        this.polyEdgeMouseIsTouching = this.service.isOnPolygonLine(this.currentMouseX, this.currentMouseY);
-        this.transformPointIndex = this.service.getClickedTransformPointIndex(this.currentMouseX, this.currentMouseY);
+        this.polyEdgeMouseIsTouching = service.isOnPolygonLine(this.currentMouseX, this.currentMouseY);
+        this.transformPointIndex = service.getClickedTransformPointIndex(this.currentMouseX, this.currentMouseY);
 
         repaint();
     }
@@ -301,15 +364,39 @@ public class CanvasView extends JPanel
     public void mouseEntered(MouseEvent event) {
         this.mouseInCanvas = true;
 
-        switch (this.model.getSelectedTool()) {
+        switch (service.getSelectedTool()) {
             case CanvasTool.HAND_TOOL:
+                try {
+                    Toolkit toolkit = Toolkit.getDefaultToolkit();
+                    Dimension dimension = toolkit.getBestCursorSize(10, 10);
+                    this.setCursor(toolkit.createCustomCursor(
+                            IconService.getImage("/cursors/hand.png", dimension.width, dimension.height), 
+                            new java.awt.Point(0, 0),
+                            "Move Tool"));
+                } catch (Exception e) {
+                    this.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
+                }
+                break;
             case CanvasTool.MOVE_TOOL:
-                this.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                try {
+                    Toolkit toolkit = Toolkit.getDefaultToolkit();
+                    Dimension dimension = toolkit.getBestCursorSize(10, 10);
+                    this.setCursor(toolkit.createCustomCursor(
+                            IconService.getImage("/cursors/cursor.png", dimension.width, dimension.height), 
+                            new java.awt.Point(0, 0),
+                            "Move Tool"));
+                } catch (Exception e) {
+                    // Fallback to default cursor if custom cursor fails
+                    this.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
+                }
                 break;
             case CanvasTool.POLYGON_TOOL:
             case CanvasTool.CIRCLE_TOOL:
             case CanvasTool.RECT_TOOL:
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+                break;
+            case CanvasTool.TEXT_TOOL:
+                this.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
                 break;
             default:
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -325,16 +412,63 @@ public class CanvasView extends JPanel
         this.mouseInCanvas = false;
     }
 
+    @Override()
+    public void keyTyped(KeyEvent e) {
+        if (isTyping()) {
+            char c = e.getKeyChar();
+            Log.d("CanvasView.keyTyped()", "Typed character: " + c);
+            // Add the character to the current text object
+            // You'll need to implement this based on your Text class
+
+            CanvasObject object = this.getService().getLastAddedObject();
+            if (object instanceof Text) {
+                ((Text) object).addCharacter(c);
+            }
+        }
+    }
+
+    @Override()
+    public void keyPressed(KeyEvent e) {
+        if (!isTyping()) {
+            return;
+        }
+
+        Text text = (Text) this.getService().getLastAddedObject();
+
+        switch (e.getKeyCode()) {
+            case KeyEvent.VK_LEFT:
+                text.moveCursorLeft();
+                break;
+            case KeyEvent.VK_RIGHT:
+                text.moveCursorRight();
+                break;
+            case KeyEvent.VK_UP:
+                text.moveCursorUp();
+                break;
+            case KeyEvent.VK_DOWN:
+                text.moveCursorDown();
+                break;
+        }
+    }
+
+    @Override()
+    public void keyReleased(KeyEvent e) {
+        // Handle key releases if needed
+    }
+
     private void drawSelectionBox(Graphics g) {
-        CanvasTool tool = this.model.getSelectedTool();
+        CanvasService service = this.getService();
+
+        CanvasTool tool = service.getSelectedTool();
         if (tool != CanvasTool.MOVE_TOOL) {
             return;
         }
 
         // Draw selection/expansion box
-        Selection selection = this.service.getSelection();
+        Selection selection = service.getSelection();
         if (this.shouldShowSelectionBox(selection)) {
             BoundingRect r = selection.getBoundingRect();
+            if (r == null) return;
 
             g.setColor(Color.BLACK);
             g.drawRect(r.left, r.top, r.right - r.left, r.bottom - r.top);
@@ -357,10 +491,15 @@ public class CanvasView extends JPanel
         }
     }
 
+    private boolean isTyping() {
+        return this.getService().getSelectedTool() == CanvasTool.TEXT_TOOL && this.drawing;
+    }
+
     private void drawBackground(Graphics g) {
-        int x = this.service.getScreenX();
-        int y = this.service.getScreenY();
-        
+        CanvasService service = this.getService();
+        int x = service.getScreenX();
+        int y = service.getScreenY();
+
         g.setColor(Color.WHITE);
         g.fillRect(x, y, this.width, this.height);
 
@@ -373,17 +512,19 @@ public class CanvasView extends JPanel
     }
 
     private void drawTooltip(Graphics g) {
+        CanvasService service = this.getService();
+
         if (this.mouseInCanvas) {
             g.setColor(Color.BLACK);
             g.drawString(
-                "(x: " + this.service.getRelativeX(this.currentMouseX)
-                    + ", y: " + this.service.getRelativeY(this.currentMouseY) + ")",
+                "(x: " + service.getRelativeX(this.currentMouseX)
+                    + ", y: " + service.getRelativeY(this.currentMouseY) + ")",
                 this.currentMouseX + 10,
                 this.currentMouseY - 10
             );
 
-            if (this.model.getSelectedTool() == CanvasTool.MOVE_TOOL) {
-                for (Selectable s: this.model.getSelectableObjects()) {
+            if (service.getSelectedTool() == CanvasTool.MOVE_TOOL) {
+                for (Selectable s: service.getSelectableObjects()) {
                     if (s.mouseHit(this.currentMouseX, this.currentMouseY)) {
                         g.drawString(s.getTooltipText(), this.currentMouseX + 10, this.currentMouseY + 5);
                     }
@@ -452,8 +593,20 @@ public class CanvasView extends JPanel
         getActionMap().put("backspacePressed", new AbstractAction() {
             @Override()
             public void actionPerformed(ActionEvent e) {
-                CanvasView.this.service.findAndDeleteSelectedObjects();
+                if (CanvasView.this.isTyping()) {
+                } else {
+                    CanvasView.this.getService().findAndDeleteSelectedObjects();
+                }
             }
         });
+    }
+
+    // TODO: refactor to avoid code duplication with other views
+    private CanvasService getService() {
+        Scene scene = this.sceneService.getActiveScene();
+        if (scene != null) {
+            return scene.getCanvasService();
+        }
+        return this.service;
     }
 }

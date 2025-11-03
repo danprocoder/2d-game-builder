@@ -34,6 +34,11 @@ public class Polygon extends Shape {
         this.color = color;
     }
 
+    @Override()
+    public Point getPosition() {
+        return this.pts.get(0);
+    }
+
     public void addPoint(Point p) {
         this.pts.add(p);
     }

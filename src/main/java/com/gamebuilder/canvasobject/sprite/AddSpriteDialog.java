@@ -9,7 +9,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import com.gamebuilder.model.CanvasModel;
 import com.gamebuilder.model.SpriteModel;
 import com.gamebuilder.service.CanvasService;
 

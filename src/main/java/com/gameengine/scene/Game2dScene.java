@@ -12,12 +12,12 @@ public class Game2dScene {
 
     public Game2dScene() {}
 
-    public void addSceneObject(Game2dSceneObject sceneObject) {
-        this.sceneObjects.add(sceneObject);
-    }
-
     public void setBackgroundAudio(Audio backgroundAudio) {
         this.backgroundAudio = backgroundAudio;
+    }
+
+    public void setObjects(ArrayList<Game2dSceneObject> objects) {
+        this.sceneObjects = objects;
     }
 
     public void drawScene(GLAutoDrawable drawable) {

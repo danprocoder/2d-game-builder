@@ -62,6 +62,11 @@ public class Circle extends Shape {
     }
 
     @Override()
+    public Point getPosition() {
+        return this.p;
+    }
+
+    @Override()
     public BoundingRect getBoundingRect() {
         BoundingRect rect = new BoundingRect(
             getOffsetY() + this.p.getYInt(),

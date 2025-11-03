@@ -12,6 +12,7 @@ import com.gamebuilder.model.Asset;
 import com.gamebuilder.model.Selectable;
 
 public class AnimatedSpriteImage implements Selectable {
+    private Sprite sprite;
     private ArrayList<SpriteImage> frames = new ArrayList<SpriteImage>();
     private int currentFramePos = 0;
     private boolean continuous = true;
@@ -25,6 +26,10 @@ public class AnimatedSpriteImage implements Selectable {
     private int offsetX = 0;
     private int offsetY = 0;
     private boolean isSelected = false;
+
+    public AnimatedSpriteImage(Sprite sprite) {
+        this.sprite = sprite;
+    }
 
     @Override()
     public void setSelected(boolean selected) {
@@ -69,6 +74,7 @@ public class AnimatedSpriteImage implements Selectable {
     @Override()
     public void translate(int dx, int dy) {
         this.point = new Point(this.point.getXInt() + dx, this.point.getYInt() + dy);
+        this.sprite.translate(dx, dy);
     }
 
     @Override()

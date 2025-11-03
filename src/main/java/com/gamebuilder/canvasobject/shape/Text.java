@@ -7,6 +7,7 @@ import java.awt.Graphics;
 
 import com.gamebuilder.Point;
 import com.gamebuilder.canvasobject.CanvasObject;
+import com.gamebuilder.model.Selectable;
 
 class TextStyle {
     public String fontFamily = "Arial";
@@ -17,7 +18,7 @@ class TextStyle {
     public Color color = Color.BLACK;
 }
 
-public class Text extends CanvasObject {
+public class Text extends CanvasObject implements Selectable {
     private String content;
     private Point initialPosition;
     private Point cursorPosition;
@@ -31,11 +32,20 @@ public class Text extends CanvasObject {
     private boolean focus = true;
     private TextStyle style = new TextStyle();
 
+    private BoundingRect boundingRect;
+    private int width = 0;
+    private int height = 0;
+    private boolean selected;
+
     public Text(String name, Point initialPosition) {
         setName(name);
         this.content = "";
         this.initialPosition = initialPosition;
         this.cursorPosition = initialPosition.clone();
+        this.boundingRect = new BoundingRect(
+                initialPosition.getXInt(),
+                initialPosition.getYInt(), initialPosition.getXInt() + 5,
+                initialPosition.getYInt() + 15);
     }
 
     public void addCharacter(char character) {
@@ -57,37 +67,89 @@ public class Text extends CanvasObject {
 
         // Update cursor position
         this.cursorPosition = this.getCursorPointAtIndex();
+
+        this.calculateRect();
     }
 
     public void onClick(Point mousePosition) {
+        if (this.boundingRect != null
+                && !this.boundingRect.hit(mousePosition.getXInt(), mousePosition.getYInt())) {
+            this.setFocus(false);
+            return;
+        }
+
         this.currentCursorIndex = this.getIndexAtPosition(mousePosition);
         this.cursorPosition = this.getCursorPointAtIndex();
     }
 
     @Override()
+    public Point getPosition() {
+        return this.initialPosition;
+    }
+
+    @Override()
+    public void setSelected(boolean selected) {
+        this.selected = selected;
+    }
+
+    @Override()
+    public boolean getSelected() {
+        return this.selected;
+    }
+
+    @Override()
+    public String getTooltipText() {
+        return "";
+    }
+
+    @Override()
+    public BoundingRect getBoundingRect() {
+        return this.boundingRect;
+    }
+
+    @Override()
+    public boolean mouseHit(int mx, int my) {
+        return this.boundingRect.hit(mx, my);
+    }
+
+    @Override()
+    public void translate(int dx, int dy) {
+        this.initialPosition = new Point(this.initialPosition.getXInt() + dx, this.initialPosition.getYInt() + dy);
+        this.calculateRect();
+    }
+
+    @Override()
     public int getWidth() {
-        return 0;
+        return this.width;
     }
 
     @Override()
     public int getHeight() {
-        return 0;
+        return this.height;
     }
 
     @Override()
     public void setSize(int width, int height) {
-        
+        int dw = width - this.width;
+        int dh = height - this.height;
+
+        this.style.fontSize = this.style.fontSize + dw;
+        this.calculateRect();
     }
 
     @Override()
     public void draw(Graphics g) {
         this.g = g.create();
 
-        this.drawText(g);
+        this.drawText(this.g);
 
         if (this.focus) {
-            this.drawCursor(g);
+            this.drawCursor(this.g);
+
+            this.drawBox(this.g);
         }
+
+        this.g.dispose();
     }
 
     @Override()
@@ -252,10 +314,32 @@ public class Text extends CanvasObject {
     }
 
     private void drawBox(Graphics g) {
-
+        if (this.boundingRect != null) {
+            g.drawRect(this.boundingRect.left, this.boundingRect.top,
+                    this.boundingRect.right - this.boundingRect.left,
+                    this.boundingRect.bottom - this.boundingRect.top);
+        }
     }
 
     private void calculateRect() {
+        String[] lines = this.content.split("\n", -1);
+        int x = this.initialPosition.getXInt();
+        int y = this.initialPosition.getYInt();
 
+        int longestLineWidth = 0;
+        int totalLineHeight = 0;
+
+        FontMetrics fm = this.g.getFontMetrics();
+        for (int i = 0; i < lines.length; i++) {
+            int w = this.getStringLength(lines[i]);
+            if (w > longestLineWidth) longestLineWidth = w;
+
+            totalLineHeight += fm.getHeight();
+        }
+
+        this.width = longestLineWidth + 2 + 1;
+        this.height = totalLineHeight;
+        this.boundingRect = new BoundingRect(y, x + this.width,
+                y + totalLineHeight, x);
     }
 }

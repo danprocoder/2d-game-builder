@@ -10,6 +10,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import com.gamebuilder.canvasobject.CanvasObject;
+import com.gamebuilder.canvasobject.shape.Polygon;
 import com.gamebuilder.canvasobject.sprite.Sprite;
 import com.gamebuilder.scene.Scene;
 import com.gamebuilder.service.CanvasService;
@@ -83,14 +84,13 @@ public class RunGameAction implements ActionListener {
 
     private Game loadGame() {
         try {
-            ArrayList<Game2dObject> objects = this.getGameObjects();
             ArrayList<Game2dScene> scenes = this.getGameScenes();
 
             // This is for testing purposes only. Later, the objects will be added from 
             // the getGameScenes() method based on the SceneModel data
-            scenes.get(0).addSceneObject(new Game2dSceneObject(objects.get(0), 10, 100));
+            // scenes.get(0).addSceneObject(new Game2dSceneObject(objects.get(0), 10, 100));
 
-            return new Game("1.0", "Test Game", new int[] { 800, 600 }, objects, scenes);
+            return new Game("1.0", "Test Game", new int[] { 800, 600 }, scenes);
         } catch (Exception e) {
             System.out.println("Failed to load game");
             e.printStackTrace();
@@ -108,6 +108,8 @@ public class RunGameAction implements ActionListener {
                 gameScene.setBackgroundAudio(
                     new Audio(s.getBackgroundMusic().getFullPath())
                 );
+
+                gameScene.setObjects(this.getGameObjects(s.getCanvasService()));
             }
             gameScenes.add(gameScene);
         }
@@ -115,11 +117,11 @@ public class RunGameAction implements ActionListener {
         return gameScenes;
     }  
 
-    private ArrayList<Game2dObject> getGameObjects() {
-        ArrayList<Game2dObject> gameObjects = new ArrayList<>();
+    private ArrayList<Game2dSceneObject> getGameObjects(CanvasService canvasService) {
+        ArrayList<Game2dSceneObject> objects = new ArrayList<Game2dSceneObject>();
 
-        for (int i = 0; i < this.canvasService.getObjects().size(); i++) {
-            CanvasObject canvasObject = this.canvasService.getObjects().get(i);
+        for (int i = 0; i < canvasService.getObjects().size(); i++) {
+            CanvasObject canvasObject = canvasService.getObjects().get(i);
 
             if (canvasObject instanceof Sprite) {
                 ArrayList<Game2dObjectState> states = new ArrayList<>();
@@ -136,10 +138,19 @@ public class RunGameAction implements ActionListener {
                         new Game2dObjectState(new ArrayList<>(), image, "default")
                     );
                 });
-                gameObjects.add(new Game2dObject(states, "default"));
+                new Game2dSceneObject(
+                    new Game2dObject(states, "default"),
+                    canvasObject.getPosition().x,
+                    canvasObject.getPosition().y);
+                // canvasObject.
+                // gameObjects.add();
+            } else if (canvasObject instanceof Polygon) {
+
+            } else {
+
             }
         }
 
-        return gameObjects;
+        return objects;
     }
 }

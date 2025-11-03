@@ -19,8 +19,6 @@ public class CanvasModel {
     private ArrayList<CanvasObject> objects = new ArrayList<CanvasObject>();
     private Polygon transformingPolygon = null;
 
-    private ArrayList<CanvasModelUpdateListener> updateListener = new ArrayList<CanvasModelUpdateListener>();
-
     private Color color = Color.RED;
     private CanvasTool selectedTool = CanvasTool.MOVE_TOOL;
 
@@ -97,7 +95,6 @@ public class CanvasModel {
 
     public void setSelectedTool(CanvasTool tool) {
         this.selectedTool = tool;
-        this.notifyUpdate("tool_change");
     }
 
     public ArrayList<Selectable> getSelectedObjects() {
@@ -115,12 +112,10 @@ public class CanvasModel {
         for (Selectable s: this.getSelectableObjects()) {
             s.setSelected(false);
         }
-        this.notifyUpdate("deselect_all");
     }
 
     public void setTransformingPolygon(Polygon poly) {
         this.transformingPolygon = poly;
-        this.notifyUpdate("transform_polygon");
     }
 
     public Polygon getTransformingPolygon() {
@@ -129,8 +124,6 @@ public class CanvasModel {
 
     public void addObject(CanvasObject object) {
         this.objects.add(object);
-
-        this.notifyUpdate("add_object");
     }
 
     public void deleteObject(CanvasObject object) {
@@ -159,16 +152,5 @@ public class CanvasModel {
 
     public void setColor(Color color) {
         this.color = color;
-        this.notifyUpdate("color_change");
-    }
-
-    public void notifyUpdate(String update) {
-        for (CanvasModelUpdateListener listener: this.updateListener) {
-            listener.onCanvasModelUpdated(this, update);
-        }
-    }
-
-    public void addUpdateListener(CanvasModelUpdateListener listener) {
-        this.updateListener.add(listener);
     }
 }

@@ -67,6 +67,11 @@ public class Rectangle extends Shape {
     }
 
     @Override()
+    public Point getPosition() {
+        return this.point;
+    }
+
+    @Override()
     public BoundingRect getBoundingRect() {
         return new BoundingRect(
             getOffsetY() + this.point.getYInt(),

@@ -9,9 +9,12 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.gamebuilder.canvasobject.CanvasObject;
 import com.gamebuilder.model.AssetModel;
+import com.gamebuilder.model.Event;
 import com.gamebuilder.model.SceneModel;
 import com.gamebuilder.model.SceneUpdateListener;
 import com.gamebuilder.scene.Scene;
@@ -44,7 +47,12 @@ public class SceneService {
         return this.sceneModel.getScenes().size();
     }
 
-    public Scene getCurrentScene() {
+    public void showFabsView() {
+        this.sceneModel.getScenes().forEach(item -> item.setActive(false));
+        this.notifyChange();
+    }
+
+    public Scene getActiveScene() {
         for (Scene scene: this.sceneModel.getScenes()) {
             if (scene.isActive()) {
                 return scene;
@@ -64,6 +72,10 @@ public class SceneService {
 
     public void addUpdateListener(SceneUpdateListener listener) {
         this.updateListeners.add(listener);
+    }
+
+    public void removeUpdateListener(SceneUpdateListener listener) {
+        this.updateListeners.remove(listener);
     }
 
     public void notifyChange() {
@@ -88,14 +100,35 @@ public class SceneService {
         NodeList sceneNodes = doc.getElementsByTagName("Scenes").item(0).getChildNodes();
 
         for (int i = 0; i < sceneNodes.getLength(); i++) {
-            if (sceneNodes.item(i).getNodeName().equals("Scene")) {
-                NamedNodeMap attributes = sceneNodes.item(i).getAttributes();
+            Node sceneNode = sceneNodes.item(i);
+            if (sceneNode.getNodeName().equals("Scene")) {
+                NamedNodeMap attributes = sceneNode.getAttributes();
                 String id = attributes.getNamedItem("id").getNodeValue();
                 String name = attributes.getNamedItem("name").getNodeValue();
                 String bgMusicId = attributes.getNamedItem("backgroundMusicId").getNodeValue();
 
                 Scene scene = new Scene(id, name);
                 scene.setBackgroundMusic(AssetModel.getInstance().getById(bgMusicId));
+
+                // TODO: Load canvas objects for the scene
+                NodeList sceneNodeChildren = sceneNodes.item(i).getChildNodes();
+                for (int j = 0; j < sceneNodeChildren.getLength(); j++) {
+                    Node child = sceneNodeChildren.item(j);
+                    if (child.getNodeName().equals("Objects")) {
+                        NodeList objectNodeList = child.getChildNodes();
+                        ArrayList<CanvasObject> objects = XmlParserService.parseObjects(objectNodeList);
+                        for (CanvasObject object: objects) {
+                            scene.getCanvasService().addNewObject(object);
+                        }
+                    } else if (child.getNodeName().equals("Events")) {
+                        
+                    }
+                }
+
+                ArrayList<Event> events = XmlParserService.parseEvents(sceneNode);
+                System.out.println("Loaded " + events.size() + " events for scene " + scene.getName());
+                scene.setEvents(events);
+
                 scenes.add(scene);
             }
         }

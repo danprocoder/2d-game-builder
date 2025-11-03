@@ -20,14 +20,12 @@ public class Game {
         String version,
         String name,
         int[] resolution,
-        ArrayList<Game2dObject> object,
         ArrayList<Game2dScene> scenes
     ) {
         this.version = version;
         this.name = name;
         this.width = resolution[0];
         this.height = resolution[1];
-        this.objects = object;
         this.scenes = scenes;
     }
 
@@ -43,9 +41,9 @@ public class Game {
         return this.scenes.get(this.currentSceneIndex);
     }
 
-    public ArrayList<Game2dObject> get2dObjects() {
-        return this.objects;
-    }
+    // public ArrayList<Game2dObject> get2dObjects() {
+    //     return this.objects;
+    // }
 
     public ArrayList<Game2dScene> get2dScenes() {
         return this.scenes;

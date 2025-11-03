@@ -65,6 +65,7 @@ public class MenuBarView extends JMenuBar {
         JMenu viewMenu = new JMenu("View");
         JMenuItem fabs = new JMenuItem("Fabs");
         fabs.addActionListener(e -> {
+            // TODO: Remove from sceneService.
             sceneService.showFabsView();
         });
         viewMenu.add(fabs);

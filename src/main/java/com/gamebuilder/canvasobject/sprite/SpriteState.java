@@ -39,7 +39,9 @@ public class SpriteState {
             sb.append(this.collisionBox.toXml());
             sb.append("\n  </CollisionBox>");
         }
-        sb.append(this.image.toXml());
+        if (this.image != null) {
+            sb.append(this.image.toXml());
+        }
         sb.append("\n</State>");
         return sb.toString();
     }

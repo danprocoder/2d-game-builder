@@ -30,15 +30,24 @@ import com.gamebuilder.canvasobject.sprite.SpriteState;
 import com.gamebuilder.model.Asset;
 import com.gamebuilder.model.CanvasModel;
 import com.gamebuilder.model.CanvasModelUpdateListener;
+import com.gamebuilder.model.SceneUpdateListener;
+import com.gamebuilder.scene.Scene;
 import com.gamebuilder.service.CanvasService;
+import com.gamebuilder.service.SceneService;
+import com.gamebuilder.util.Log;
 import com.gamebuilder.view.dnd.ImageAssetFlavor;
 
-public class ObjectSettingsView extends JPanel implements CanvasModelUpdateListener {
+public class ObjectSettingsView extends JPanel implements CanvasModelUpdateListener, SceneUpdateListener {
     private CanvasService canvasService;
+    private SceneService sceneService;
 
-    public ObjectSettingsView(CanvasService canvasService) {
+    public ObjectSettingsView(CanvasService canvasService, SceneService sceneService) {
         this.canvasService = canvasService;
+        this.sceneService = sceneService;
+
         this.canvasService.addUpdateListener(this);
+        this.sceneService.addUpdateListener(this);
+
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
         this.showSettingsForSprite();
@@ -60,7 +69,7 @@ public class ObjectSettingsView extends JPanel implements CanvasModelUpdateListe
         scrollPanel.setAlignmentX(LEFT_ALIGNMENT);
         scrollPanel.setLayout(new BoxLayout(scrollPanel, BoxLayout.Y_AXIS));
 
-        CanvasObject activeObject = this.canvasService.getActiveObject();
+        CanvasObject activeObject = this.getService().getActiveObject();
         if (activeObject == null) {
             return;
         }
@@ -137,7 +146,7 @@ public class ObjectSettingsView extends JPanel implements CanvasModelUpdateListe
                 public void mouseClicked(MouseEvent e) {
                     if (e.getClickCount() == 1) {
                         sprite.setState(state.getName());
-                        ObjectSettingsView.this.canvasService.notifyUpdate("sprite_state_changed");
+                        ObjectSettingsView.this.getService().notifyUpdate("sprite_state_changed");
                     }
                 }
             });
@@ -157,11 +166,11 @@ public class ObjectSettingsView extends JPanel implements CanvasModelUpdateListe
 
                         AnimatedSpriteImage image = (AnimatedSpriteImage) state.getImage();
                         if (image == null) {
-                            image = new AnimatedSpriteImage();
+                            image = new AnimatedSpriteImage(sprite);
                             state.setImage(image);
                         }
                         image.addFrame(asset);
-                        ObjectSettingsView.this.canvasService.notifyUpdate("sprite_image_frame_added");
+                        ObjectSettingsView.this.getService().notifyUpdate("sprite_image_frame_added");
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -185,11 +194,32 @@ public class ObjectSettingsView extends JPanel implements CanvasModelUpdateListe
 
     private void onAddSpriteState(Sprite sprite) {
         sprite.addState(new SpriteState("New State" + (sprite.getStates().size() + 1)));
-        this.canvasService.notifyUpdate("sprite_state_added");
+        this.getService().notifyUpdate("sprite_state_added");
     }
 
     @Override
     public void onCanvasModelUpdated(CanvasModel model, String update) {
         this.showSettingsForSprite();
+    }
+
+    @Override()
+    public void onSceneUpdate() {
+        this.canvasService.removeUpdateListener(this);
+        for (Scene scene : this.sceneService.getScenes()) {
+            scene.getCanvasService().removeUpdateListener(this);
+        }
+        Log.v("ObjectListView.setupUpdateListeners()", "Adding update listener to canvas service");
+        this.getService().addUpdateListener(this);
+
+        this.showSettingsForSprite();
+    }
+
+    // TODO: refactor to avoid code duplication with other views
+    private CanvasService getService() {
+        Scene scene = this.sceneService.getActiveScene();
+        if (scene != null) {
+            return scene.getCanvasService();
+        }
+        return this.canvasService;
     }
 }

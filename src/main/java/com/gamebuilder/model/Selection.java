@@ -31,6 +31,8 @@ public class Selection {
 
         for (Selectable s: this.selected) {
             BoundingRect r = s.getBoundingRect();
+            if (r == null) return null;
+            
             if (r.left < minX) {
                 minX = r.left;
             }

@@ -17,7 +17,7 @@ public class Game2dObjectAnimatedImage {
     private float opacity = 100.0f;
 
     public void addFrame(Asset asset, int w, int h) throws IOException {
-        this.frames.add(new Game2dObjectImage(asset.getPath(), w, h));
+        this.frames.add(new Game2dObjectImage(asset.getFullPath(), w, h));
     }
 
     public Game2dObjectImage getFrameImage() {
