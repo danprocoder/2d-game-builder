@@ -34,3 +34,21 @@ application {
 tasks.test {
     useJUnitPlatform()
 }
+
+// Convenience runner for the AST printer in test sources
+// AI Generated Code
+tasks.register<JavaExec>("runAstPrinter") {
+    group = "application"
+    description = "Read a script file and print its AST using ScriptParserAstPrinter. Pass -Pscript=/path/to/file to use a custom file; defaults to test resource."
+    classpath = sourceSets.test.get().runtimeClasspath
+    mainClass.set("com.gamebuilder.service.ScriptParserAstPrinter")
+    // Only forward the -Pscript property if it looks like a real path
+    val scriptPropAny: Any? = project.findProperty("script")
+    val scriptProp: String? = scriptPropAny?.toString()
+    if (!scriptProp.isNullOrBlank()) {
+        val lowered = scriptProp.trim().lowercase()
+        if (lowered != "true" && lowered != "false") {
+            args(scriptProp)
+        }
+    }
+}
