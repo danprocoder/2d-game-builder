@@ -10,7 +10,7 @@ import java.nio.file.Paths;
 
 import javax.swing.JFileChooser;
 
-import com.gamebuilder.model.Asset;
+import com.gamebuilder.model.asset.AbstractAsset;
 import com.gamebuilder.model.AssetModel;
 import com.gamebuilder.model.Project;
 import com.gamebuilder.model.ProjectModel;
@@ -110,7 +110,7 @@ public class SaveMenuAction implements ActionListener {
         StringBuilder xml = new StringBuilder();
         xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
         xml.append("\n<Assets>");
-        for (Asset a: assetModel.getAssets()) {
+        for (AbstractAsset a: assetModel.getAssets()) {
             xml.append(a.toXml());
         }
         xml.append("\n</Assets>");
