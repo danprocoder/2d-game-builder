@@ -33,12 +33,12 @@ public class ShapePanel extends JPanel {
 
     private void addButtons() {
         try {
-            JButton moveTool = new JButton(IconService.getIcon("/draw tools/move.png"));
-            JButton handTool = new JButton(IconService.getIcon("/draw tools/hold.png"));
-            JButton polygonTool = new JButton(IconService.getIcon("/draw tools/polygon.png"));
-            JButton circleTool = new JButton(IconService.getIcon("/draw tools/oval.png"));
-            JButton rectTool = new JButton(IconService.getIcon("/draw tools/square.png"));
-            JButton textTool = new JButton(IconService.getIcon("/draw tools/text.png"));
+            JButton moveTool = new JButton(IconService.getIcon("/draw tools/move.png", 24, 24));
+            JButton handTool = new JButton(IconService.getIcon("/draw tools/hold.png", 24, 24));
+            JButton polygonTool = new JButton(IconService.getIcon("/draw tools/polygon.png", 24, 24));
+            JButton circleTool = new JButton(IconService.getIcon("/draw tools/oval.png", 24, 24));
+            JButton rectTool = new JButton(IconService.getIcon("/draw tools/square.png", 24, 24));
+            JButton textTool = new JButton(IconService.getIcon("/draw tools/text.png", 24, 24));
 
             moveTool.addActionListener(new ActionListener() {
                 @Override()
