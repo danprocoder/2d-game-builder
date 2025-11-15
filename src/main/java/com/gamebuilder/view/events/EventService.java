@@ -1,23 +1,24 @@
 package com.gamebuilder.view.events;
 
-import java.util.ArrayList;
+import com.gamebuilder.model.Event;
+import com.gamebuilder.util.EventEmitter;
 
 public class EventService {
-    private ArrayList<EventSelectedListener> listeners = new ArrayList<>();
+    private EventEmitter<EventSelectedListener> eventEmitter = new EventEmitter<>();
 
     public void addEventListener(EventSelectedListener listener) {
-        listeners.add(listener);
+        eventEmitter.subscribe(listener);
     }
 
     public void notifyUpdate(String eventType) {
-        for (EventSelectedListener listener : listeners) {
-            listener.onEventSelected(eventType);
-        }
+        eventEmitter.emit(e -> e.onEventSelected(eventType));
     }
 
     public void notifySelected(Object selected) {
-        for (EventSelectedListener listener: listeners) {
-            listener.onObjectSelected(selected);
-        }
+        eventEmitter.emit(e -> e.onObjectSelected(selected));
+    }
+
+    public void notifyObjectEventSelected(Event event) {
+        eventEmitter.emit(e -> e.onObjectEventSelected(event));
     }
 }
