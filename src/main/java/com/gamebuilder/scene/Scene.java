@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 import com.gamebuilder.canvasobject.CanvasObject;
-import com.gamebuilder.model.Asset;
+import com.gamebuilder.model.asset.Asset;
 import com.gamebuilder.model.CanvasModel;
 import com.gamebuilder.model.Event;
 import com.gamebuilder.service.CanvasService;
