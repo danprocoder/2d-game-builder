@@ -8,7 +8,7 @@ import java.util.ArrayList;
 
 import com.gamebuilder.Point;
 import com.gamebuilder.canvasobject.shape.BoundingRect;
-import com.gamebuilder.model.Asset;
+import com.gamebuilder.model.asset.Asset;
 import com.gamebuilder.model.Selectable;
 
 public class AnimatedSpriteImage implements Selectable {
@@ -21,7 +21,6 @@ public class AnimatedSpriteImage implements Selectable {
     private int delay = 2000;
     private int fps = 10;
     private boolean endReached = false;
-    private Point point = new Point(0, 0);
     private float opacity = 100.0f;
     private int offsetX = 0;
     private int offsetY = 0;
@@ -58,11 +57,13 @@ public class AnimatedSpriteImage implements Selectable {
                 maxHeight = frame.getHeight();
             }
         }
+        // TODO: refactor to improve readability
+        Point p = this.sprite.getPosition();
         return new BoundingRect(
-            this.offsetY + this.point.getYInt(),
-            this.offsetX + this.point.getXInt() + maxWidth,
-            this.offsetY + this.point.getYInt() + maxHeight,
-            this.offsetX + this.point.getXInt()
+            this.offsetY + p.getYInt(),
+            this.offsetX + p.getXInt() + maxWidth,
+            this.offsetY + p.getYInt() + maxHeight,
+            this.offsetX + p.getXInt()
         );
     }
 
@@ -73,7 +74,6 @@ public class AnimatedSpriteImage implements Selectable {
 
     @Override()
     public void translate(int dx, int dy) {
-        this.point = new Point(this.point.getXInt() + dx, this.point.getYInt() + dy);
         this.sprite.translate(dx, dy);
     }
 
@@ -91,19 +91,19 @@ public class AnimatedSpriteImage implements Selectable {
     }
 
     public int getX() {
-        return this.point.getXInt();
+        return this.sprite.getPosition().getXInt();
     }
 
     public void setX(int x) {
-        this.point = new Point(x, this.point.getYInt());
+        this.sprite.setPosition(new Point(x, this.sprite.getPosition().getYInt()));
     }
 
     public int getY() {
-        return this.point.getYInt();
+        return this.sprite.getPosition().getYInt();
     }
 
     public void setY(int y) {
-        this.point = new Point(this.point.getXInt(), y);
+        this.sprite.setPosition(new Point(this.sprite.getPosition().getXInt(), y));
     }
 
     public void adjustOffset(int dx, int dy) {
@@ -148,14 +148,19 @@ public class AnimatedSpriteImage implements Selectable {
     }
 
     public void draw(Graphics g) {
+        Point p = this.sprite.getPosition();
+        float imgX = this.offsetX + p.getXInt();
+        float imgY = this.offsetY + p.getYInt();
+
+        this.draw(g, new Point(imgX, imgY));
+    }
+
+    public void draw(Graphics g, Point position) {
         Graphics2D g2d = (Graphics2D) g.create();
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, this.opacity / 100f));
 
-        int imgX = this.offsetX + this.point.getXInt();
-        int imgY = this.offsetY + this.point.getYInt();
-
         if (!this.continuous && this.endReached) {
-           this.frames.get(0).draw(g2d, imgX, imgY);
+           this.frames.get(0).draw(g2d, position.getXInt(), position.getYInt());
            return;
         }
 
@@ -165,11 +170,11 @@ public class AnimatedSpriteImage implements Selectable {
         if (this.endReached && (now - this.lastFinishedAt) > this.delay) {
             this.endReached = false;
             this.currentFramePos = 0;
-            this.frames.get(0).draw(g2d, imgX, imgY);
+            this.frames.get(0).draw(g2d, position.getXInt(), position.getYInt());
         }
 
         long diffMillis = now - this.lastFrameTime;
-        this.frames.get(this.currentFramePos).draw(g2d, imgX, imgY);
+        this.frames.get(this.currentFramePos).draw(g2d, position.getXInt(), position.getYInt());
 
         if (diffMillis > (1000 / this.fps)) {
             this.lastFrameTime = System.currentTimeMillis();
@@ -202,12 +207,13 @@ public class AnimatedSpriteImage implements Selectable {
     }
 
     public String toXml() {
+        Point p = this.sprite.getPosition();
         StringBuilder sb = new StringBuilder();
         sb.append(
             String.format(
                 "\n<AnimatedImage x=\"%d\" y=\"%d\" fps=\"%d\" continuous=\"%b\" delay=\"%d\">",
-                (int) this.point.x,
-                (int) this.point.y,
+                (int) p.x,
+                (int) p.y,
                 this.fps,
                 this.continuous,
                 this.delay

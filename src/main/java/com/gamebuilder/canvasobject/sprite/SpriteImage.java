@@ -8,7 +8,7 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
-import com.gamebuilder.model.Asset;
+import com.gamebuilder.model.asset.Asset;
 
 public class SpriteImage {
     private Asset asset;
@@ -44,12 +44,6 @@ public class SpriteImage {
     public void setSize(int width, int height) {
         this.width = width;
         this.height = height;
-    }
-
-    public void draw(Graphics g) {
-        if (this.image != null) {
-            g.drawImage(this.image.getScaledInstance(this.width, this.height, Image.SCALE_SMOOTH), 0, 0, null);
-        }
     }
 
     public void draw(Graphics g, int x, int y) {
