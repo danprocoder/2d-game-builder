@@ -17,6 +17,7 @@ import com.gamebuilder.model.AssetModel;
 import com.gamebuilder.model.Event;
 import com.gamebuilder.model.SceneModel;
 import com.gamebuilder.model.SceneUpdateListener;
+import com.gamebuilder.model.asset.Asset;
 import com.gamebuilder.scene.Scene;
 
 class XmlLoadException extends Exception {
@@ -108,7 +109,8 @@ public class SceneService {
                 String bgMusicId = attributes.getNamedItem("backgroundMusicId").getNodeValue();
 
                 Scene scene = new Scene(id, name);
-                scene.setBackgroundMusic(AssetModel.getInstance().getById(bgMusicId));
+                // TODO: type safe check here before typecasting
+                scene.setBackgroundMusic((Asset) AssetModel.getInstance().getById(bgMusicId));
 
                 // TODO: Load canvas objects for the scene
                 NodeList sceneNodeChildren = sceneNodes.item(i).getChildNodes();
