@@ -1,4 +1,4 @@
-package com.gamebuilder.canvasobject.shape;
+package com.gamebuilder.canvasobject;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -6,7 +6,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 
 import com.gamebuilder.Point;
-import com.gamebuilder.canvasobject.CanvasObject;
+import com.gamebuilder.canvasobject.shape.BoundingRect;
 import com.gamebuilder.model.Selectable;
 
 class TextStyle {
@@ -38,6 +38,8 @@ public class Text extends CanvasObject implements Selectable {
     private boolean selected;
 
     public Text(String name, Point initialPosition) {
+        super();
+        // TODO: move initial setting of name to constructor.
         setName(name);
         this.content = "";
         this.initialPosition = initialPosition;
@@ -131,10 +133,14 @@ public class Text extends CanvasObject implements Selectable {
     @Override()
     public void setSize(int width, int height) {
         int dw = width - this.width;
-        int dh = height - this.height;
 
         this.style.fontSize = this.style.fontSize + dw;
         this.calculateRect();
+    }
+
+    @Override()
+    public void draw(Graphics g, Point position) {
+        this.draw(g);
     }
 
     @Override()
@@ -154,7 +160,7 @@ public class Text extends CanvasObject implements Selectable {
 
     @Override()
     public String toXml() {
-        return "<Text></Text>";
+        return String.format("<Text id=\"%s\"></Text>", this.getId());
     }
 
     public void setFocus(boolean focus) {

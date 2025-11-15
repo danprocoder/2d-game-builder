@@ -1,19 +1,17 @@
-package com.gamebuilder.model;
+package com.gamebuilder.model.asset;
 
 import java.nio.file.Paths;
-import java.util.UUID;
 
 import com.gamebuilder.util.Log;
 
-public class Asset {
-    String id;
-    String name;
+public class Asset extends AbstractAsset {
     String path;
     String fullPath;
     String type;
 
     public Asset(String path, String fullPath) {
-        this.id = UUID.randomUUID().toString();
+        super();
+
         this.path = path;
         this.fullPath = fullPath;
         this.name = Paths.get(path).getFileName().toString();
@@ -21,7 +19,8 @@ public class Asset {
     }
 
     public Asset(String id, String path, String fullPath, String name) {
-        this.id = id;
+        super(id);
+
         this.path = path;
         this.fullPath = fullPath;
         this.name = name;
@@ -40,20 +39,12 @@ public class Asset {
         return "unknown";
     }
 
-    public String getId() {
-        return this.id;
-    }
-
     public void setName(String name) {
         this.name = name;
     }
 
     public String getType() {
         return this.type;
-    }
-
-    public String getName() {
-        return this.name;
     }
 
     public String getPath() {
@@ -64,6 +55,7 @@ public class Asset {
         return this.fullPath;
     }
 
+    @Override()
     public String toXml() {
         return String.format(
             "\n  <AssetItem id=\"%s\" name=\"%s\" path=\"%s\" />",
