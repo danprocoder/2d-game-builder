@@ -15,6 +15,7 @@ import com.gamebuilder.service.SceneService;
 import com.gamebuilder.util.LogThread;
 import com.gamebuilder.view.CanvasView;
 import com.gamebuilder.view.GameEditorView;
+import com.gamebuilder.view.ToolBarView;
 import com.gamebuilder.view.menubar.MenuBarView;
 
 public class GameBuilder implements ProjectModelUpdateListener {
@@ -50,6 +51,8 @@ public class GameBuilder implements ProjectModelUpdateListener {
                 this.projectModel
             )
         );
+
+        frame.add(new ToolBarView(this.sceneService), BorderLayout.NORTH);
 
         frame.add(
             new GameEditorView(
